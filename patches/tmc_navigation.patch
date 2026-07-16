@@ -1,0 +1,277 @@
+diff --git a/tmc_astar_lib/CMakeLists.txt b/tmc_astar_lib/CMakeLists.txt
+index b8bd850..4a774b5 100644
+--- a/tmc_astar_lib/CMakeLists.txt
++++ b/tmc_astar_lib/CMakeLists.txt
+@@ -43,9 +43,6 @@ target_include_directories(${PROJECT_NAME}
+     $<INSTALL_INTERFACE:include>
+ )
+ 
+-ament_environment_hooks(
+-  "${ament_cmake_package_templates_ENVIRONMENT_HOOK_LIBRARY_PATH}"
+-)
+ ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ 
+ install(
+diff --git a/tmc_astar_lib/include/tmc_astar_lib/layered_cost_map.hpp b/tmc_astar_lib/include/tmc_astar_lib/layered_cost_map.hpp
+index d8dbc8b..cfd11e7 100644
+--- a/tmc_astar_lib/include/tmc_astar_lib/layered_cost_map.hpp
++++ b/tmc_astar_lib/include/tmc_astar_lib/layered_cost_map.hpp
+@@ -27,6 +27,7 @@ DAMAGE.
+ */
+ #ifndef TMC_ASTAR_LIB_LAYERED_COST_MAP_HPP_
+ #define TMC_ASTAR_LIB_LAYERED_COST_MAP_HPP_
++#include <array>
+ #include <climits>
+ #include <stdint.h>
+ #include <limits>
+diff --git a/tmc_base_path_follower/CMakeLists.txt b/tmc_base_path_follower/CMakeLists.txt
+index a071c71..378b01f 100644
+--- a/tmc_base_path_follower/CMakeLists.txt
++++ b/tmc_base_path_follower/CMakeLists.txt
+@@ -57,9 +57,6 @@ target_include_directories(${PROJECT_NAME}_lib
+     $<INSTALL_INTERFACE:include>
+ )
+ 
+-ament_environment_hooks(
+-  "${ament_cmake_package_templates_ENVIRONMENT_HOOK_LIBRARY_PATH}"
+-)
+ ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ 
+ add_executable(base_path_follower
+diff --git a/tmc_base_path_planner/CMakeLists.txt b/tmc_base_path_planner/CMakeLists.txt
+index 2254ec8..6fade94 100644
+--- a/tmc_base_path_planner/CMakeLists.txt
++++ b/tmc_base_path_planner/CMakeLists.txt
+@@ -50,9 +50,6 @@ target_include_directories(${PROJECT_NAME}_lib
+     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+     $<INSTALL_INTERFACE:include>
+ )
+-ament_environment_hooks(
+-  "${ament_cmake_package_templates_ENVIRONMENT_HOOK_LIBRARY_PATH}"
+-)
+ ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ 
+ add_executable(base_path_planner
+diff --git a/tmc_grid_map_server/CMakeLists.txt b/tmc_grid_map_server/CMakeLists.txt
+index 1c4fc62..010f84d 100644
+--- a/tmc_grid_map_server/CMakeLists.txt
++++ b/tmc_grid_map_server/CMakeLists.txt
+@@ -45,9 +45,6 @@ target_link_libraries(${PROJECT_NAME}_lib
+   ${SDL_LIBRARY} ${SDL_IMAGE_LIBRARIES}
+ )
+ 
+-ament_environment_hooks(
+-  "${ament_cmake_package_templates_ENVIRONMENT_HOOK_LIBRARY_PATH}"
+-)
+ ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ 
+ 
+diff --git a/tmc_laser_2d_localizer/CMakeLists.txt b/tmc_laser_2d_localizer/CMakeLists.txt
+index 450c2b2..75d51b5 100644
+--- a/tmc_laser_2d_localizer/CMakeLists.txt
++++ b/tmc_laser_2d_localizer/CMakeLists.txt
+@@ -32,9 +32,6 @@ target_include_directories(${PROJECT_NAME}_lib
+   PUBLIC
+     $<INSTALL_INTERFACE:include>
+ )
+-ament_environment_hooks(
+-  "${ament_cmake_package_templates_ENVIRONMENT_HOOK_LIBRARY_PATH}"
+-)
+ ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ 
+ 
+diff --git a/tmc_laser_2d_localizer/src/laser_2d_localizer_node.hpp b/tmc_laser_2d_localizer/src/laser_2d_localizer_node.hpp
+index e00d004..80ca4a7 100644
+--- a/tmc_laser_2d_localizer/src/laser_2d_localizer_node.hpp
++++ b/tmc_laser_2d_localizer/src/laser_2d_localizer_node.hpp
+@@ -50,11 +50,11 @@ DAMAGE.
+ #include <std_srvs/srv/empty.hpp>
+ #include <tf2/convert.h>
+ #include <tf2/utils.h>
+-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
++#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+ #include <tf2_ros/buffer.h>
+ #include <tf2_ros/transform_broadcaster.h>
+ #include <tf2_ros/transform_listener.h>
+-#include <tf2_sensor_msgs/tf2_sensor_msgs.h>
++#include <tf2_sensor_msgs/tf2_sensor_msgs.hpp>
+ #include <tmc_navigation_msgs/srv/bool_response.hpp>
+ #include <tmc_navigation_msgs/srv/set_localization_score_limit.hpp>
+ #include <tmc_pose_2d_lib/distance_map.hpp>
+diff --git a/tmc_map_merger/CMakeLists.txt b/tmc_map_merger/CMakeLists.txt
+index d3b2a25..7c96c73 100644
+--- a/tmc_map_merger/CMakeLists.txt
++++ b/tmc_map_merger/CMakeLists.txt
+@@ -39,9 +39,6 @@ target_include_directories(${PROJECT_NAME}_lib
+     $<INSTALL_INTERFACE:include>
+ )
+ 
+-ament_environment_hooks(
+-  "${ament_cmake_package_templates_ENVIRONMENT_HOOK_LIBRARY_PATH}"
+-)
+ ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ 
+ 
+diff --git a/tmc_map_merger/src/map_converter.hpp b/tmc_map_merger/src/map_converter.hpp
+index 8cc8a7a..1badcd1 100644
+--- a/tmc_map_merger/src/map_converter.hpp
++++ b/tmc_map_merger/src/map_converter.hpp
+@@ -37,7 +37,7 @@ DAMAGE.
+ #include <pcl_conversions/pcl_conversions.h>
+ #include <rclcpp/rclcpp.hpp>
+ #include <sensor_msgs/msg/laser_scan.hpp>
+-#include <tf2_eigen/tf2_eigen.h>
++#include <tf2_eigen/tf2_eigen.hpp>
+ 
+ #include "map.hpp"
+ #include "map_drawer.hpp"
+diff --git a/tmc_map_merger/src/point_cloud_filter.hpp b/tmc_map_merger/src/point_cloud_filter.hpp
+index 9914e1f..7c136e4 100644
+--- a/tmc_map_merger/src/point_cloud_filter.hpp
++++ b/tmc_map_merger/src/point_cloud_filter.hpp
+@@ -32,6 +32,7 @@ DAMAGE.
+ #include <string>
+ #include <vector>
+ 
++#include <pcl/common/transforms.h>
+ #include <pcl/filters/passthrough.h>
+ #include <pcl/filters/radius_outlier_removal.h>
+ #include <pcl/filters/voxel_grid.h>
+diff --git a/tmc_map_merger/src/tf2helper.hpp b/tmc_map_merger/src/tf2helper.hpp
+index 95196b8..569096e 100644
+--- a/tmc_map_merger/src/tf2helper.hpp
++++ b/tmc_map_merger/src/tf2helper.hpp
+@@ -31,7 +31,7 @@ DAMAGE.
+ #include <string>
+ 
+ #include <rclcpp/rclcpp.hpp>
+-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
++#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+ #include <tf2_ros/transform_listener.h>
+ 
+ namespace tmc_map_merger {
+diff --git a/tmc_marker_based_localizer/CMakeLists.txt b/tmc_marker_based_localizer/CMakeLists.txt
+index 955d17c..80b0b39 100644
+--- a/tmc_marker_based_localizer/CMakeLists.txt
++++ b/tmc_marker_based_localizer/CMakeLists.txt
+@@ -52,9 +52,6 @@ target_link_libraries(${PROJECT_NAME}_lib
+   yaml-cpp
+ )
+ 
+-ament_environment_hooks(
+-  "${ament_cmake_package_templates_ENVIRONMENT_HOOK_LIBRARY_PATH}"
+-)
+ ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ 
+ add_executable(marker_based_localizer
+diff --git a/tmc_move_base/CMakeLists.txt b/tmc_move_base/CMakeLists.txt
+index 1591ade..23af736 100644
+--- a/tmc_move_base/CMakeLists.txt
++++ b/tmc_move_base/CMakeLists.txt
+@@ -41,9 +41,6 @@ target_include_directories(${PROJECT_NAME}_lib
+     $<INSTALL_INTERFACE:include>
+ )
+ 
+-ament_environment_hooks(
+-  "${ament_cmake_package_templates_ENVIRONMENT_HOOK_LIBRARY_PATH}"
+-)
+ ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ 
+ 
+diff --git a/tmc_odometry_switcher/CMakeLists.txt b/tmc_odometry_switcher/CMakeLists.txt
+index 0f10087..39ff510 100644
+--- a/tmc_odometry_switcher/CMakeLists.txt
++++ b/tmc_odometry_switcher/CMakeLists.txt
+@@ -34,9 +34,6 @@ target_include_directories(${PROJECT_NAME}_lib
+     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+     $<INSTALL_INTERFACE:include>
+ )
+-ament_environment_hooks(
+-  "${ament_cmake_package_templates_ENVIRONMENT_HOOK_LIBRARY_PATH}"
+-)
+ ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ 
+ add_executable(odometry_switcher
+diff --git a/tmc_pose_2d_lib/CMakeLists.txt b/tmc_pose_2d_lib/CMakeLists.txt
+index bed7884..2ad94ce 100644
+--- a/tmc_pose_2d_lib/CMakeLists.txt
++++ b/tmc_pose_2d_lib/CMakeLists.txt
+@@ -54,9 +54,6 @@ target_include_directories(ros_if
+     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+     $<INSTALL_INTERFACE:include>
+ )
+-ament_environment_hooks(
+-  "${ament_cmake_package_templates_ENVIRONMENT_HOOK_LIBRARY_PATH}"
+-)
+ ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ 
+ target_link_libraries(ros_if pose_2d)
+diff --git a/tmc_pose_integrator/CMakeLists.txt b/tmc_pose_integrator/CMakeLists.txt
+index 4ab3c54..53dff2e 100644
+--- a/tmc_pose_integrator/CMakeLists.txt
++++ b/tmc_pose_integrator/CMakeLists.txt
+@@ -39,9 +39,6 @@ target_include_directories(${PROJECT_NAME}_lib
+     $<BUILD_INTERFACE:${Boost_INCLUDE_DIRS}>
+ )
+ 
+-ament_environment_hooks(
+-  "${ament_cmake_package_templates_ENVIRONMENT_HOOK_LIBRARY_PATH}"
+-)
+ ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ 
+ add_executable(pose_integrator
+diff --git a/tmc_safety_velocity_limiter/CMakeLists.txt b/tmc_safety_velocity_limiter/CMakeLists.txt
+index 9daf3c1..c5d38ff 100644
+--- a/tmc_safety_velocity_limiter/CMakeLists.txt
++++ b/tmc_safety_velocity_limiter/CMakeLists.txt
+@@ -54,9 +54,6 @@ target_include_directories(${PROJECT_NAME}_lib
+     $<INSTALL_INTERFACE:include>
+ )
+ 
+-ament_environment_hooks(
+-  "${ament_cmake_package_templates_ENVIRONMENT_HOOK_LIBRARY_PATH}"
+-)
+ ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ 
+ add_executable(safety_velocity_limiter
+diff --git a/tmc_safety_velocity_limiter/src/occupancy.cpp b/tmc_safety_velocity_limiter/src/occupancy.cpp
+index 0588218..305c251 100644
+--- a/tmc_safety_velocity_limiter/src/occupancy.cpp
++++ b/tmc_safety_velocity_limiter/src/occupancy.cpp
+@@ -32,7 +32,7 @@ DAMAGE.
+ #include <memory>
+ #include <string>
+ #include <nav_msgs/msg/occupancy_grid.hpp>
+-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
++#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+ #include <tf2_ros/transform_listener.h>
+ 
+ #include "param.hpp"
+diff --git a/tmc_velocity_switcher/CMakeLists.txt b/tmc_velocity_switcher/CMakeLists.txt
+index 7166ffd..c7b17cb 100644
+--- a/tmc_velocity_switcher/CMakeLists.txt
++++ b/tmc_velocity_switcher/CMakeLists.txt
+@@ -29,9 +29,6 @@ target_include_directories(${PROJECT_NAME}_lib
+     $<INSTALL_INTERFACE:include>
+ )
+ 
+-ament_environment_hooks(
+-  "${ament_cmake_package_templates_ENVIRONMENT_HOOK_LIBRARY_PATH}"
+-)
+ ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ 
+ add_executable(velocity_switcher
+diff --git a/tmc_viewpoint_controller/CMakeLists.txt b/tmc_viewpoint_controller/CMakeLists.txt
+index e40d651..03ccc7b 100644
+--- a/tmc_viewpoint_controller/CMakeLists.txt
++++ b/tmc_viewpoint_controller/CMakeLists.txt
+@@ -44,9 +44,6 @@ target_include_directories(${PROJECT_NAME}_lib
+     $<INSTALL_INTERFACE:include>
+ )
+ 
+-ament_environment_hooks(
+-  "${ament_cmake_package_templates_ENVIRONMENT_HOOK_LIBRARY_PATH}"
+-)
+ ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ 
+ add_executable(viewpoint_controller

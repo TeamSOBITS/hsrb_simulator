@@ -1,0 +1,177 @@
+diff --git a/hsrb_gazebo_bringup/config/gazebo_ros2_control_hsrb.yaml b/hsrb_gazebo_bringup/config/gazebo_ros2_control_hsrb.yaml
+index 4a2d9af..0777495 100644
+--- a/hsrb_gazebo_bringup/config/gazebo_ros2_control_hsrb.yaml
++++ b/hsrb_gazebo_bringup/config/gazebo_ros2_control_hsrb.yaml
+@@ -2,7 +2,8 @@ controller_manager:
+   ros__parameters:
+     motion_command_limitter_controller:
+       type: tmc_realtime_controllers/MotionCommandLimitterController
+-
++      ros__parameters:
++        parameter_connection_timeout: 1
+ omni_base_controller:
+   ros__parameters:
+     command_joints:
+@@ -11,13 +12,12 @@ omni_base_controller:
+       steer: motion_command_limitter_controller/base_roll_joint
+     yaw_velocity_limit: 1.8
+     wheel_velocity_limit: 8.5
+-
+ motion_command_limitter_controller:
+   ros__parameters:
+     joint_names:
+-      - base_l_drive_wheel_joint
+-      - base_r_drive_wheel_joint
+-      - base_roll_joint
++    - base_l_drive_wheel_joint
++    - base_r_drive_wheel_joint
++    - base_roll_joint
+     base_l_drive_wheel_joint:
+       use_command_velocity: true
+       acceleration_limit: 41.7
+@@ -27,3 +27,4 @@ motion_command_limitter_controller:
+     base_roll_joint:
+       use_command_velocity: true
+       acceleration_limit: 5.0
++    parameter_connection_timeout: 1
+diff --git a/hsrb_gazebo_bringup/config/gazebo_ros2_control_hsrc.yaml b/hsrb_gazebo_bringup/config/gazebo_ros2_control_hsrc.yaml
+index d26725b..129c483 100644
+--- a/hsrb_gazebo_bringup/config/gazebo_ros2_control_hsrc.yaml
++++ b/hsrb_gazebo_bringup/config/gazebo_ros2_control_hsrc.yaml
+@@ -2,7 +2,8 @@ controller_manager:
+   ros__parameters:
+     motion_command_limitter_controller:
+       type: tmc_realtime_controllers/MotionCommandLimitterController
+-
++      ros__parameters:
++        parameter_connection_timeout: 1
+ omni_base_controller:
+   ros__parameters:
+     command_joints:
+@@ -11,13 +12,12 @@ omni_base_controller:
+       steer: motion_command_limitter_controller/base_roll_joint
+     yaw_velocity_limit: 1.8
+     wheel_velocity_limit: 20.8
+-
+ motion_command_limitter_controller:
+   ros__parameters:
+     joint_names:
+-      - base_l_drive_wheel_joint
+-      - base_r_drive_wheel_joint
+-      - base_roll_joint
++    - base_l_drive_wheel_joint
++    - base_r_drive_wheel_joint
++    - base_roll_joint
+     base_l_drive_wheel_joint:
+       use_command_velocity: true
+       acceleration_limit: 41.7
+@@ -27,3 +27,4 @@ motion_command_limitter_controller:
+     base_roll_joint:
+       use_command_velocity: true
+       acceleration_limit: 5.0
++    parameter_connection_timeout: 1
+diff --git a/hsrb_gazebo_bringup/worlds/empty.sdf b/hsrb_gazebo_bringup/worlds/empty.sdf
+index ed86649..d0511df 100644
+--- a/hsrb_gazebo_bringup/worlds/empty.sdf
++++ b/hsrb_gazebo_bringup/worlds/empty.sdf
+@@ -17,6 +17,14 @@
+     <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+     <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+     <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
++    <!-- Sensor systems are world-level in gz sim: without these the robot's
++         lidar/cameras (Sensors), IMU (Imu) and wrist F/T (ForceTorque)
++         publish nothing even though their topics are advertised. -->
++    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
++      <render_engine>ogre2</render_engine>
++    </plugin>
++    <plugin filename="gz-sim-imu-system" name="gz::sim::systems::Imu"/>
++    <plugin filename="gz-sim-forcetorque-system" name="gz::sim::systems::ForceTorque"/>
+ 
+     <gravity>0 0 -9.8</gravity>
+     <physics name="1ms" type="ignored">
+diff --git a/hsrb_gz_ros2_control/CMakeLists.txt b/hsrb_gz_ros2_control/CMakeLists.txt
+index d009808..4480c8c 100644
+--- a/hsrb_gz_ros2_control/CMakeLists.txt
++++ b/hsrb_gz_ros2_control/CMakeLists.txt
+@@ -18,15 +18,18 @@ endif()
+ # Find dependencies
+ find_package(ament_cmake REQUIRED)
+ find_package(ament_index_cpp REQUIRED)
++find_package(gz_sim_vendor REQUIRED)
++find_package(gz-sim REQUIRED)
++find_package(gz_plugin_vendor REQUIRED)
++find_package(gz-plugin REQUIRED)
+ find_package(gz_ros2_control REQUIRED)
+ find_package(hardware_interface REQUIRED)
+ find_package(pluginlib REQUIRED)
+ find_package(rclcpp REQUIRED)
++find_package(rclcpp_lifecycle REQUIRED)
+ find_package(tmc_exxx_servo_motor_protocol REQUIRED)
+ find_package(yaml_cpp_vendor REQUIRED)
+ 
+-find_package(ignition-gazebo6 REQUIRED)
+-find_package(ignition-plugin1 REQUIRED)
+ 
+ include_directories(include)
+ 
+@@ -42,8 +45,8 @@ ament_target_dependencies(hsrb_hardware_plugins
+   tmc_exxx_servo_motor_protocol
+ )
+ target_link_libraries(hsrb_hardware_plugins
+-  ignition-gazebo6::core
+-  ignition-plugin1::register
++  gz-sim::gz-sim
++  gz-plugin::register
+ )
+ 
+ install(DIRECTORY
+diff --git a/hsrb_gz_ros2_control/include/hsrb_gz_ros2_control/hsrb_system.hpp b/hsrb_gz_ros2_control/include/hsrb_gz_ros2_control/hsrb_system.hpp
+index a5ab838..e3f08c1 100644
+--- a/hsrb_gz_ros2_control/include/hsrb_gz_ros2_control/hsrb_system.hpp
++++ b/hsrb_gz_ros2_control/include/hsrb_gz_ros2_control/hsrb_system.hpp
+@@ -161,9 +161,9 @@ class GazeboSimSystem : public gz_ros2_control::GazeboSimSystemInterface {
+       std::map<std::string, sim::Entity>& joints,
+       const hardware_interface::HardwareInfo& hardware_info,
+       sim::EntityComponentManager& _ecm,
+-      int& update_rate) override;
++      unsigned int update_rate) override;
+ 
+-  std::string get_name() const override { return this->parent_->get_name(); }
++  std::string get_name() const { return this->parent_->get_name(); }
+ 
+  private:
+   std::vector<hardware_interface::StateInterface> state_interfaces_;
+diff --git a/hsrb_gz_ros2_control/package.xml b/hsrb_gz_ros2_control/package.xml
+index b170334..08e1608 100644
+--- a/hsrb_gz_ros2_control/package.xml
++++ b/hsrb_gz_ros2_control/package.xml
+@@ -9,14 +9,14 @@
+ 
+   <depend>ament_index_cpp</depend>
+   <depend>gz_ros2_control</depend>
++  <depend>gz_sim_vendor</depend>
++  <depend>gz_plugin_vendor</depend>
+   <depend>hardware_interface</depend>
+   <depend>pluginlib</depend>
+   <depend>rclcpp</depend>
+   <depend>tmc_exxx_servo_motor_protocol</depend>
+   <depend>yaml_cpp_vendor</depend>
+ 
+-  <depend>ignition-gazebo6</depend>
+-  <depend>ignition-plugin</depend>
+ 
+   <test_depend>ament_lint_auto</test_depend>
+   <test_depend>ament_lint_common</test_depend>
+diff --git a/hsrb_gz_ros2_control/src/hsrb_system.cpp b/hsrb_gz_ros2_control/src/hsrb_system.cpp
+index dd5f958..d43cd47 100644
+--- a/hsrb_gz_ros2_control/src/hsrb_system.cpp
++++ b/hsrb_gz_ros2_control/src/hsrb_system.cpp
+@@ -273,7 +273,7 @@ bool GazeboSimSystem::initSim(
+     std::map<std::string, sim::Entity>& enableJoints,
+     const hardware_interface::HardwareInfo& hardware_info,
+     sim::EntityComponentManager& _ecm,
+-    int& update_rate) {
++    unsigned int update_rate) {
+   this->nh_ = model_nh;
+ 
+   try {

@@ -161,9 +161,9 @@ class GazeboSimSystem : public gz_ros2_control::GazeboSimSystemInterface {
       std::map<std::string, sim::Entity>& joints,
       const hardware_interface::HardwareInfo& hardware_info,
       sim::EntityComponentManager& _ecm,
-      int& update_rate) override;
+      unsigned int update_rate) override;
 
-  std::string get_name() const override { return this->parent_->get_name(); }
+  std::string get_name() const { return this->parent_->get_name(); }
 
  private:
   std::vector<hardware_interface::StateInterface> state_interfaces_;

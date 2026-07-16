@@ -9,14 +9,14 @@
 
   <depend>ament_index_cpp</depend>
   <depend>gz_ros2_control</depend>
+  <depend>gz_sim_vendor</depend>
+  <depend>gz_plugin_vendor</depend>
   <depend>hardware_interface</depend>
   <depend>pluginlib</depend>
   <depend>rclcpp</depend>
   <depend>tmc_exxx_servo_motor_protocol</depend>
   <depend>yaml_cpp_vendor</depend>
 
-  <depend>ignition-gazebo6</depend>
-  <depend>ignition-plugin</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

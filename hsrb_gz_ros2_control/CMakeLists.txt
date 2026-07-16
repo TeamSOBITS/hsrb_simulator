@@ -18,15 +18,18 @@ endif()
 # Find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(ament_index_cpp REQUIRED)
+find_package(gz_sim_vendor REQUIRED)
+find_package(gz-sim REQUIRED)
+find_package(gz_plugin_vendor REQUIRED)
+find_package(gz-plugin REQUIRED)
 find_package(gz_ros2_control REQUIRED)
 find_package(hardware_interface REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_lifecycle REQUIRED)
 find_package(tmc_exxx_servo_motor_protocol REQUIRED)
 find_package(yaml_cpp_vendor REQUIRED)
 
-find_package(ignition-gazebo6 REQUIRED)
-find_package(ignition-plugin1 REQUIRED)
 
 include_directories(include)
 
@@ -42,8 +45,8 @@ ament_target_dependencies(hsrb_hardware_plugins
   tmc_exxx_servo_motor_protocol
 )
 target_link_libraries(hsrb_hardware_plugins
-  ignition-gazebo6::core
-  ignition-plugin1::register
+  gz-sim::gz-sim
+  gz-plugin::register
 )
 
 install(DIRECTORY

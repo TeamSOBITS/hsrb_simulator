@@ -2,7 +2,8 @@ controller_manager:
   ros__parameters:
     motion_command_limitter_controller:
       type: tmc_realtime_controllers/MotionCommandLimitterController
-
+      ros__parameters:
+        parameter_connection_timeout: 1
 omni_base_controller:
   ros__parameters:
     command_joints:
@@ -11,13 +12,12 @@ omni_base_controller:
       steer: motion_command_limitter_controller/base_roll_joint
     yaw_velocity_limit: 1.8
     wheel_velocity_limit: 20.8
-
 motion_command_limitter_controller:
   ros__parameters:
     joint_names:
-      - base_l_drive_wheel_joint
-      - base_r_drive_wheel_joint
-      - base_roll_joint
+    - base_l_drive_wheel_joint
+    - base_r_drive_wheel_joint
+    - base_roll_joint
     base_l_drive_wheel_joint:
       use_command_velocity: true
       acceleration_limit: 41.7
@@ -27,3 +27,4 @@ motion_command_limitter_controller:
     base_roll_joint:
       use_command_velocity: true
       acceleration_limit: 5.0
+    parameter_connection_timeout: 1

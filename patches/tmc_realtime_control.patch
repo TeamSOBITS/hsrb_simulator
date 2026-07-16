@@ -1,0 +1,182 @@
+diff --git a/tmc_realtime_controllers/include/tmc_realtime_controllers/exxx_drive_mode_controller.hpp b/tmc_realtime_controllers/include/tmc_realtime_controllers/exxx_drive_mode_controller.hpp
+index 398e98c..00304ad 100644
+--- a/tmc_realtime_controllers/include/tmc_realtime_controllers/exxx_drive_mode_controller.hpp
++++ b/tmc_realtime_controllers/include/tmc_realtime_controllers/exxx_drive_mode_controller.hpp
+@@ -54,10 +54,6 @@ class ExxxDriveModeController : public controller_interface::ControllerInterface
+     kRequestReceive = 2,
+     kRequestDone = 3,
+   } request_state_;
+-
+-  controller_interface::return_type init(const std::string& controller_name, const std::string& namespace_ = "",
+-                                         const rclcpp::NodeOptions& node_options = rclcpp::NodeOptions()) override;
+-
+   bool InitImpl();
+   controller_interface::InterfaceConfiguration command_interface_configuration() const override;
+   controller_interface::InterfaceConfiguration state_interface_configuration() const override;
+diff --git a/tmc_realtime_controllers/include/tmc_realtime_controllers/infrequent_servo_access_controller.hpp b/tmc_realtime_controllers/include/tmc_realtime_controllers/infrequent_servo_access_controller.hpp
+index 41ab94f..651c6ef 100644
+--- a/tmc_realtime_controllers/include/tmc_realtime_controllers/infrequent_servo_access_controller.hpp
++++ b/tmc_realtime_controllers/include/tmc_realtime_controllers/infrequent_servo_access_controller.hpp
+@@ -53,9 +53,6 @@ class InfrequentServoAccessController : public controller_interface::ControllerI
+   InfrequentServoAccessController() {}
+   // Destructor
+   ~InfrequentServoAccessController() {}
+-
+-  controller_interface::return_type init(const std::string& controller_name, const std::string& namespace_ = "",
+-                                         const rclcpp::NodeOptions& node_options = rclcpp::NodeOptions()) override;
+   controller_interface::return_type update(const rclcpp::Time& time, const rclcpp::Duration& period) override;
+ 
+   rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn on_init() override;
+diff --git a/tmc_realtime_controllers/include/tmc_realtime_controllers/motion_command_limitter_controller.hpp b/tmc_realtime_controllers/include/tmc_realtime_controllers/motion_command_limitter_controller.hpp
+index 9fad7ad..5cc6a83 100644
+--- a/tmc_realtime_controllers/include/tmc_realtime_controllers/motion_command_limitter_controller.hpp
++++ b/tmc_realtime_controllers/include/tmc_realtime_controllers/motion_command_limitter_controller.hpp
+@@ -124,13 +124,14 @@ class MotionCommandLimitterController : public controller_interface::ChainableCo
+   // [ERROR] [1758777952.184953644] [controller_manager]: Got request to turn ON chained mode for controller
+   // 'motion_command_limitter_controller', but controller refused to do it! The control will probably not work as
+   // expected. Try to restart all controllers. If the error persist check controllers' individual configuration.
+-  bool on_set_chained_mode(bool chained_mode) override { return false; }
++  bool on_set_chained_mode(bool chained_mode) override { return true; }
+ 
+   controller_interface::return_type update_and_write_commands(const rclcpp::Time& time,
+                                                               const rclcpp::Duration& period) override;
+ 
+   // The operation by subscribing to the topic is not intended
+-  controller_interface::return_type update_reference_from_subscribers() override {
++  controller_interface::return_type update_reference_from_subscribers(
++      const rclcpp::Time&, const rclcpp::Duration&) override {
+     return controller_interface::return_type::OK;
+   }
+ 
+diff --git a/tmc_realtime_controllers/include/tmc_realtime_controllers/servo_state_broadcaster.hpp b/tmc_realtime_controllers/include/tmc_realtime_controllers/servo_state_broadcaster.hpp
+index 7a156fd..6835e2f 100644
+--- a/tmc_realtime_controllers/include/tmc_realtime_controllers/servo_state_broadcaster.hpp
++++ b/tmc_realtime_controllers/include/tmc_realtime_controllers/servo_state_broadcaster.hpp
+@@ -70,8 +70,6 @@ auto GetParameter(const rclcpp_lifecycle::LifecycleNode::SharedPtr& node, const
+ class ServoStateBroadcaster : public controller_interface::ControllerInterface {
+  public:
+   ServoStateBroadcaster();
+-  controller_interface::return_type init(const std::string& controller_name, const std::string& namespace_ = "",
+-                                         const rclcpp::NodeOptions& node_options = rclcpp::NodeOptions()) override;
+   controller_interface::InterfaceConfiguration command_interface_configuration() const override;
+   controller_interface::InterfaceConfiguration state_interface_configuration() const override;
+   controller_interface::return_type update(const rclcpp::Time& time, const rclcpp::Duration& period) override;
+diff --git a/tmc_realtime_controllers/src/tmc_realtime_controllers/exxx_drive_mode_controller.cpp b/tmc_realtime_controllers/src/tmc_realtime_controllers/exxx_drive_mode_controller.cpp
+index d254559..03a6ad2 100644
+--- a/tmc_realtime_controllers/src/tmc_realtime_controllers/exxx_drive_mode_controller.cpp
++++ b/tmc_realtime_controllers/src/tmc_realtime_controllers/exxx_drive_mode_controller.cpp
+@@ -56,23 +56,6 @@ const double kDefalutPublishRate = 10.0;
+ 
+ namespace tmc_realtime_controllers {
+ 
+-controller_interface::return_type ExxxDriveModeController::init(const std::string& controller_name,
+-                                                                const std::string& namespace_,
+-                                                                const rclcpp::NodeOptions& node_options) {
+-  // NOTE: no member
+-  // node_options.enable_logger_service(true);
+-  const auto ret = ControllerInterface::init(controller_name, namespace_, node_options);
+-  if (ret != controller_interface::return_type::OK) {
+-    return ret;
+-  }
+-
+-  if (InitImpl()) {
+-    return controller_interface::return_type::OK;
+-  } else {
+-    return controller_interface::return_type::ERROR;
+-  }
+-}
+-
+ bool ExxxDriveModeController::InitImpl() {
+   joint_names_ = GetParameter(get_node(), "joints", std::vector<std::string>({ "" }));
+   // If joints cannot be obtained, respond with an error.
+@@ -171,7 +154,10 @@ controller_interface::return_type ExxxDriveModeController::update(const rclcpp::
+ 
+ 
+ controller_interface::CallbackReturn ExxxDriveModeController::on_init() {
+-  return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
++  if (InitImpl()) {
++    return controller_interface::CallbackReturn::SUCCESS;
++  }
++  return controller_interface::CallbackReturn::ERROR;
+ }
+ 
+ controller_interface::InterfaceConfiguration ExxxDriveModeController::command_interface_configuration() const {
+diff --git a/tmc_realtime_controllers/src/tmc_realtime_controllers/infrequent_servo_access_controller.cpp b/tmc_realtime_controllers/src/tmc_realtime_controllers/infrequent_servo_access_controller.cpp
+index d5ab358..149a38c 100644
+--- a/tmc_realtime_controllers/src/tmc_realtime_controllers/infrequent_servo_access_controller.cpp
++++ b/tmc_realtime_controllers/src/tmc_realtime_controllers/infrequent_servo_access_controller.cpp
+@@ -58,22 +58,6 @@ std::string GetKey(uint32_t key_index, const std::shared_ptr<tmc_control_msgs::s
+ 
+ namespace tmc_realtime_controllers {
+ 
+-template <typename Type, typename SrvReq, typename SrvRes>
+-controller_interface::return_type InfrequentServoAccessController<Type, SrvReq, SrvRes>::init(
+-    const std::string& controller_name, const std::string& namespace_, const rclcpp::NodeOptions& node_options) {
+-  const auto ret = ControllerInterface::init(controller_name, namespace_, node_options);
+-  if (ret != controller_interface::return_type::OK) {
+-    return ret;
+-  }
+-
+-  controller_name_ = controller_name;
+-  if (InitImpl()) {
+-    return controller_interface::return_type::OK;
+-  } else {
+-    return controller_interface::return_type::ERROR;
+-  }
+-}
+-
+ template <typename Type, typename SrvReq, typename SrvRes>
+ bool InfrequentServoAccessController<Type, SrvReq, SrvRes>::InitImpl() {
+   joint_names_ = GetParameter(get_node(), "joints", std::vector<std::string>());
+@@ -113,7 +97,10 @@ bool InfrequentServoAccessController<Type, SrvReq, SrvRes>::InitImpl() {
+ template <typename Type, typename SrvReq, typename SrvRes>
+ rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+ InfrequentServoAccessController<Type, SrvReq, SrvRes>::on_init() {
+-  return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
++  if (InitImpl()) {
++    return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
++  }
++  return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::ERROR;
+ }
+ 
+ template <typename Type, typename SrvReq, typename SrvRes>
+diff --git a/tmc_realtime_controllers/src/tmc_realtime_controllers/servo_state_broadcaster.cpp b/tmc_realtime_controllers/src/tmc_realtime_controllers/servo_state_broadcaster.cpp
+index e3528ec..08ba59f 100644
+--- a/tmc_realtime_controllers/src/tmc_realtime_controllers/servo_state_broadcaster.cpp
++++ b/tmc_realtime_controllers/src/tmc_realtime_controllers/servo_state_broadcaster.cpp
+@@ -39,23 +39,6 @@ namespace tmc_realtime_controllers {
+ 
+ ServoStateBroadcaster::ServoStateBroadcaster() {}
+ 
+-controller_interface::return_type ServoStateBroadcaster::init(const std::string& controller_name,
+-                                                              const std::string& namespace_,
+-                                                              const rclcpp::NodeOptions& node_options) {
+-  // NOTE: no member
+-  // node_options.enable_logger_service(true);
+-  const auto ret = ControllerInterface::init(controller_name, namespace_, node_options);
+-  if (ret != controller_interface::return_type::OK) {
+-    return ret;
+-  }
+-
+-  if (InitImpl()) {
+-    return controller_interface::return_type::OK;
+-  } else {
+-    return controller_interface::return_type::ERROR;
+-  }
+-}
+-
+ bool ServoStateBroadcaster::InitImpl() {
+   joint_names_ = GetParameter(get_node(), "joints", std::vector<std::string>({ "" }));
+   // If joints cannot be obtained, respond with an error.
+@@ -94,7 +77,10 @@ controller_interface::InterfaceConfiguration ServoStateBroadcaster::state_interf
+ }
+ 
+ rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn ServoStateBroadcaster::on_init() {
+-  return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
++  if (InitImpl()) {
++    return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
++  }
++  return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::ERROR;
+ }
+ 
+ rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn ServoStateBroadcaster::on_configure(

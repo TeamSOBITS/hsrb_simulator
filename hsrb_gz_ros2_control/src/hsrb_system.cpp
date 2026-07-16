@@ -273,7 +273,7 @@ bool GazeboSimSystem::initSim(
     std::map<std::string, sim::Entity>& enableJoints,
     const hardware_interface::HardwareInfo& hardware_info,
     sim::EntityComponentManager& _ecm,
-    int& update_rate) {
+    unsigned int update_rate) {
   this->nh_ = model_nh;
 
   try {
