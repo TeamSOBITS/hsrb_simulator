@@ -1,0 +1,92 @@
+diff --git a/hsrb_base_controllers/src/hsrb_base_controllers/omni_base_controller.cpp b/hsrb_base_controllers/src/hsrb_base_controllers/omni_base_controller.cpp
+index c9cd31d..03a64ca 100755
+--- a/hsrb_base_controllers/src/hsrb_base_controllers/omni_base_controller.cpp
++++ b/hsrb_base_controllers/src/hsrb_base_controllers/omni_base_controller.cpp
+@@ -63,7 +63,7 @@ controller_interface::InterfaceConfiguration OmniBaseController::state_interface
+ 
+ controller_interface::return_type OmniBaseController::update(
+     const rclcpp::Time& current_time, const rclcpp::Duration& period) {
+-  if (get_state().id() == lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE) {
++  if (get_node()->get_current_state().id() == lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE) {
+     return controller_interface::return_type::OK;
+   }
+ 
+@@ -261,7 +261,7 @@ controller_interface::CallbackReturn OmniBaseController::on_deactivate(const rcl
+ }
+ 
+ bool OmniBaseController::IsAcceptable() {
+-  return get_state().id() != lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE;
++  return get_node()->get_current_state().id() != lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE;
+ }
+ 
+ void OmniBaseController::PreemptActiveGoal() {
+diff --git a/hsrb_base_controllers/src/hsrb_base_controllers/omni_base_state.cpp b/hsrb_base_controllers/src/hsrb_base_controllers/omni_base_state.cpp
+index 8009be7..bb8d88a 100644
+--- a/hsrb_base_controllers/src/hsrb_base_controllers/omni_base_state.cpp
++++ b/hsrb_base_controllers/src/hsrb_base_controllers/omni_base_state.cpp
+@@ -154,8 +154,8 @@ void Convert(const ControllerState& in, const rclcpp::Time& stamp, const std::ve
+              control_msgs::msg::JointTrajectoryControllerState& out) {
+   out.header.stamp = stamp;
+   out.joint_names = joint_names;
+-  Convert(in.actual, out.actual);
+-  Convert(in.desired, out.desired);
++  Convert(in.actual, out.feedback);
++  Convert(in.desired, out.reference);
+   Convert(in.error, out.error);
+   Convert(in.output, out.output);
+ }
+diff --git a/hsrb_gripper_controller/include/hsrb_gripper_controller/hrh_gripper_controller.hpp b/hsrb_gripper_controller/include/hsrb_gripper_controller/hrh_gripper_controller.hpp
+index 1427119..5e9ee69 100644
+--- a/hsrb_gripper_controller/include/hsrb_gripper_controller/hrh_gripper_controller.hpp
++++ b/hsrb_gripper_controller/include/hsrb_gripper_controller/hrh_gripper_controller.hpp
+@@ -54,10 +54,6 @@ class HrhGripperController : public controller_interface::ControllerInterface {
+   using Ptr = std::shared_ptr<HrhGripperController>;
+ 
+   HrhGripperController();
+-
+-  controller_interface::return_type init(const std::string& controller_name, const std::string& namespace_ = "",
+-                                         const rclcpp::NodeOptions& node_options = rclcpp::NodeOptions()) override;
+-
+   controller_interface::InterfaceConfiguration command_interface_configuration() const override;
+   controller_interface::InterfaceConfiguration state_interface_configuration() const override;
+   controller_interface::return_type update(const rclcpp::Time& time, const rclcpp::Duration& period) override;
+diff --git a/hsrb_gripper_controller/src/hrh_gripper_controller.cpp b/hsrb_gripper_controller/src/hrh_gripper_controller.cpp
+index 1b4b722..e2cc623 100644
+--- a/hsrb_gripper_controller/src/hrh_gripper_controller.cpp
++++ b/hsrb_gripper_controller/src/hrh_gripper_controller.cpp
+@@ -77,23 +77,6 @@ namespace hsrb_gripper_controller {
+ 
+ HrhGripperController::HrhGripperController() {}
+ 
+-controller_interface::return_type HrhGripperController::init(const std::string& controller_name,
+-                                                             const std::string& namespace_,
+-                                                             const rclcpp::NodeOptions& node_options) {
+-  // NOTE: no member
+-  // node_options.enable_logger_service(true);
+-  const auto ret = ControllerInterface::init(controller_name, namespace_, node_options);
+-  if (ret != controller_interface::return_type::OK) {
+-    return ret;
+-  }
+-
+-  if (InitImpl()) {
+-    return controller_interface::return_type::OK;
+-  } else {
+-    return controller_interface::return_type::ERROR;
+-  }
+-}
+-
+ bool HrhGripperController::InitImpl() {
+   std::vector<std::string> joint_names =
+       GetParameter(get_node(), "joints", std::vector<std::string>({ "hand_motor_joint" }));
+@@ -164,7 +147,10 @@ controller_interface::return_type HrhGripperController::update(const rclcpp::Tim
+ }
+ 
+ rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn HrhGripperController::on_init() {
+-  return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
++  if (InitImpl()) {
++    return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
++  }
++  return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::ERROR;
+ }
+ 
+ rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn HrhGripperController::on_configure(
