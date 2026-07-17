@@ -7,14 +7,6 @@
 #   2. hsrb_description の重複を解決 (hsrb_common側を採用)
 #   3. Jazzy / Gazebo Harmonic 対応パッチを適用 (patches/*.patch)
 #   4. rosdepで依存パッケージをインストール
-#
-# ビルドは行いません。実行後にワークスペース全体をビルドしてください:
-#   cd ~/colcon_ws && colcon build --symlink-install
-#
-# パッチの中身を変更したい場合は patches/ 以下の .patch を直接編集するか、
-# 修正済みリポジトリで `git diff > patches/<repo>.patch` を実行して更新する。
-# 全工程は冪等: 済んでいる工程はスキップされるため、何度実行してもよい。
-
 set -Eeo pipefail
 
 ROS_DISTRO_EXPECTED="jazzy"
