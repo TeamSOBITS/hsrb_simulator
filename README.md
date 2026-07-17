@@ -90,19 +90,25 @@ Jazzy／Gazebo Harmonic世代のAPIでパッチ一式と，
    ```sh
    $ cd hsrb_simulator/
    ```
-4. セットアップスクリプトを実行します．
+4. 依存パッケージをインストールします．
    ```sh
    $ bash install.sh
    ```
+5. パッケージをコンパイルします．
+   ```sh
+   $ cd ~/colcon_ws/
+   $ colcon build --symlink-install
+   $ source ~/colcon_ws/install/setup.bash
+   ```
 
-`install.sh`は次の4工程を自動で行います．全工程は冪等なので，途中で失敗しても再実行できます．
+`install.sh`は次の3工程を自動で行います（ビルドは行いません）．
+全工程は冪等なので，途中で失敗しても再実行できます．
 
 | 工程 | 内容 |
 | --- | --- |
 | clone | hsr-projectの依存リポジトリ（jazzyブランチ）を`src/`へ取得 |
-| 重複解決 | `hsrb_description`の単独版と`hsrb_common`同梱版の重複をCOLCON_IGNOREで解決 |
-| パッチ適用 | `patches/*.patch`をJazzy／Harmonic対応として各リポジトリに適用 |
-| ビルド | rosdepで依存を解決し，`hsrb_gazebo_bringup`までcolcon build |
+| 重複解決＋パッチ適用 | `hsrb_description`の重複をCOLCON_IGNOREで解決し，`patches/*.patch`をJazzy／Harmonic対応として各リポジトリに適用 |
+| rosdep | 依存パッケージのインストール |
 
 <p align="right">(<a href="#readme-top">上に戻る</a>)</p>
 

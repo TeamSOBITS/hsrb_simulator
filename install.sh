@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: BSD-3-Clause-Clear
 #
-# HSRシミュレータ(新Gazebo / ROS 2 Jazzy)のセットアップスクリプト。
+# HSRシミュレータ(新Gazebo / ROS 2 Jazzy)の依存セットアップスクリプト。
 #
 #   1. hsr-project の依存リポジトリ(jazzyブランチ)を src/ にclone
 #   2. hsrb_description の重複を解決 (hsrb_common側を採用)
 #   3. Jazzy / Gazebo Harmonic 対応パッチを適用 (patches/*.patch)
-#   4. rosdepで依存をインストールし、hsrb_gazebo_bringup までビルド
+#   4. rosdepで依存パッケージをインストール
+#
+# ビルドは行いません。実行後にワークスペース全体をビルドしてください:
+#   cd ~/colcon_ws && colcon build --symlink-install
 #
 # パッチの中身を変更したい場合は patches/ 以下の .patch を直接編集するか、
 # 修正済みリポジトリで `git diff > patches/<repo>.patch` を実行して更新する。
@@ -16,7 +19,8 @@ set -Eeo pipefail
 
 ROS_DISTRO_EXPECTED="jazzy"
 
-# clone対象: "リポジトリ名 [sparse-checkoutパス]" (ブランチは全てjazzy)
+# clone対象: "リポジトリ名 [sparse-checkoutパス]" (ブランチは全てjazzy)。
+# rosdepの依存解決対象もこの一覧から導出される。
 CLONE_REPOS=(
   "tmc_drivers tmc_exxx_servo_motor_protocol"
   "tmc_realtime_control"
@@ -38,7 +42,6 @@ PATCH_REPOS=(
 )
 
 log()  { printf '\n\033[1;34m[hsrb-install]\033[0m %s\n' "$*"; }
-warn() { printf '\n\033[1;33m[warning]\033[0m %s\n' "$*" >&2; }
 die()  { printf '\n\033[1;31m[error]\033[0m %s\n' "$*" >&2; exit 1; }
 
 trap 'printf "\n\033[1;31m[error]\033[0m %s行目で失敗しました (exit %s)\n" \
@@ -98,13 +101,8 @@ if [[ -f "$SRC_DIR/hsrb_description/package.xml" ]] &&
 fi
 
 # ---------------------------------------------------------------- パッチ
-# Jazzy / Gazebo Harmonic (gz sim 8) 対応の修正一式。内訳:
-#   hsrb_simulator       gz vendor化・gz_ros2_control Jazzy API・
-#                        コントローラ設定のtimeout調整
-#   tmc_realtime_control 旧3引数init()のon_init()移行・chainable API
-#   tmc_navigation       tf2/PCLヘッダ改名対応・重複env hook削除
-#   tmc_gazebo           odometry_publisherのignition→gz移植
-#   hsrb_controllers     control_msgsフィールド改名・Lifecycle API
+# Jazzy / Gazebo Harmonic (gz sim 8) 対応の修正一式。内訳はREADMEの
+# 「パッチの内訳」を参照。
 apply_patch() {
   local name="$1"
   local dir="$SRC_DIR/$name"
@@ -129,39 +127,26 @@ for name in "${PATCH_REPOS[@]}"; do
 done
 
 # ---------------------------------------------------------------- rosdep
+# 対象パスはclone一覧＋本リポジトリから導出する(二重管理しない)。
+ROSDEP_PATHS=("$SCRIPT_DIR")
+for entry in "${CLONE_REPOS[@]}"; do
+  # shellcheck disable=SC2086
+  set -- $entry
+  if [[ -n "${2:-}" ]]; then
+    ROSDEP_PATHS+=("$SRC_DIR/$1/$2")   # sparse cloneは対象パッケージのみ
+  else
+    ROSDEP_PATHS+=("$SRC_DIR/$1")
+  fi
+done
+
 log "rosdepで依存パッケージをインストールします"
 rosdep update
 rosdep install \
-  --from-paths \
-    "$SCRIPT_DIR" \
-    "$SRC_DIR/tmc_drivers/tmc_exxx_servo_motor_protocol" \
-    "$SRC_DIR/tmc_realtime_control" \
-    "$SRC_DIR/tmc_common" \
-    "$SRC_DIR/tmc_common_msgs" \
-    "$SRC_DIR/tmc_navigation" \
-    "$SRC_DIR/tmc_gazebo" \
-    "$SRC_DIR/hsrb_common" \
-    "$SRC_DIR/hsrb_controllers" \
+  --from-paths "${ROSDEP_PATHS[@]}" \
   --ignore-src --rosdistro "$ROS_DISTRO_EXPECTED" -r -y
 
-# ---------------------------------------------------------------- build
-log "hsrb_gazebo_bringupまでビルドします"
-cd "$WS_DIR"
-colcon build \
-  --symlink-install \
-  --packages-up-to hsrb_gazebo_bringup \
-  --cmake-args -DBUILD_TESTING=OFF
-
-source "$WS_DIR/install/setup.bash"
-
-# ---------------------------------------------------------------- 確認
-log "主要パッケージの生成を確認します"
-for pkg in tmc_exxx_servo_motor_protocol tmc_realtime_controllers \
-           tmc_gz_plugins hsrb_base_controllers hsrb_gripper_controller \
-           hsrb_gz_ros2_control hsrb_gazebo_bringup; do
-  ros2 pkg prefix "$pkg" > /dev/null || die "パッケージが見つかりません: $pkg"
-  printf '  ✔ %s\n' "$pkg"
-done
-
-log "セットアップ完了。新しいターミナルでは次を実行してください:"
-printf '  source %q\n\n' "$WS_DIR/install/setup.bash"
+# ---------------------------------------------------------------- 完了
+log "依存のセットアップが完了しました。続けてビルドしてください:"
+printf '  cd %q\n' "$WS_DIR"
+printf '  colcon build --symlink-install\n'
+printf '  source install/setup.bash\n\n'
