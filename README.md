@@ -192,10 +192,10 @@ Jazzy／Gazebo Harmonicで動かすための修正を`patches/`以下にgit diff
 | パッチ | 対象 | 内容 |
 | --- | --- | --- |
 | `hsrb_simulator.patch` | 本レポジトリ | gz vendorパッケージ化，gz_ros2_control Jazzy API対応，コントローラ設定のtimeout調整，worldへのセンサーシステム追加 |
-| `tmc_realtime_control.patch` | tmc_realtime_control | 旧3引数`init()`の`on_init()`移行，chainable controller API対応 |
-| `tmc_navigation.patch` | tmc_navigation | tf2／PCLヘッダ改名対応，重複environment hook削除 |
+| `tmc_realtime_control.patch` | tmc_realtime_control | 旧3引数`init()`の`on_init()`移行，chainable controller API対応，旧APIテストの無効化（`-DTMC_REALTIME_CONTROLLERS_ENABLE_TESTS=ON`で復活） |
+| `tmc_navigation.patch` | tmc_navigation | tf2／PCLヘッダ改名対応，重複environment hook削除，テストの`ament_index_cpp`依存宣言追加（9パッケージ） |
 | `tmc_gazebo.patch` | tmc_gazebo | `odometry_publisher`のignition→gz名前空間移植 |
-| `hsrb_controllers.patch` | hsrb_controllers | control_msgsフィールド改名対応，Lifecycle API対応 |
+| `hsrb_controllers.patch` | hsrb_controllers | control_msgsフィールド改名対応，Lifecycle API対応，diagnosticテストのJazzy API移植，旧APIテストの無効化（base／gripperは`-D..._ENABLE_TESTS=ON`で復活） |
 
 ### パッチの更新方法
 

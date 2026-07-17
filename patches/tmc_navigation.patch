@@ -25,7 +25,7 @@ index d8dbc8b..cfd11e7 100644
  #include <stdint.h>
  #include <limits>
 diff --git a/tmc_base_path_follower/CMakeLists.txt b/tmc_base_path_follower/CMakeLists.txt
-index a071c71..378b01f 100644
+index a071c71..c2110f2 100644
 --- a/tmc_base_path_follower/CMakeLists.txt
 +++ b/tmc_base_path_follower/CMakeLists.txt
 @@ -57,9 +57,6 @@ target_include_directories(${PROJECT_NAME}_lib
@@ -38,8 +38,101 @@ index a071c71..378b01f 100644
  ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
  
  add_executable(base_path_follower
+@@ -124,6 +121,8 @@ install(DIRECTORY img
+ )
+ 
+ if(BUILD_TESTING)
++  # Tests include ament_index_cpp headers; upstream forgot to declare it.
++  find_package(ament_index_cpp REQUIRED)
+   find_package(ament_cmake_gmock REQUIRED)
+   find_package(ament_cmake_gtest REQUIRED)
+ 
+@@ -139,59 +138,59 @@ if(BUILD_TESTING)
+     APPEND_ENV PARAMETER_FILE=base_path_follower_node-omni-test.yaml
+     TIMEOUT 300
+   )
+-  target_link_libraries(base_path_follower_node-omni-test ${PROJECT_NAME}_lib yaml-cpp)
++  target_link_libraries(base_path_follower_node-omni-test ${PROJECT_NAME}_lib yaml-cpp ament_index_cpp::ament_index_cpp)
+ 
+   # base_path_follower_node-diff_drive-test
+   ament_add_gtest(base_path_follower_node-diff_drive-test test/base_path_follower_node-test.cpp
+     APPEND_ENV PARAMETER_FILE=base_path_follower_node-diff_drive-test.yaml
+     TIMEOUT 300
+   )
+-  target_link_libraries(base_path_follower_node-diff_drive-test ${PROJECT_NAME}_lib yaml-cpp)
++  target_link_libraries(base_path_follower_node-diff_drive-test ${PROJECT_NAME}_lib yaml-cpp ament_index_cpp::ament_index_cpp)
+ 
+   # base_path_follower
+   ament_add_gmock(base_path_follower-test test/base_path_follower-test.cpp)
+-  target_link_libraries(base_path_follower-test ${PROJECT_NAME}_lib)
++  target_link_libraries(base_path_follower-test ${PROJECT_NAME}_lib ament_index_cpp::ament_index_cpp)
+ 
+   # base_path_follower_factory
+   ament_add_gtest(base_path_follower_factory-test test/base_path_follower_factory-test.cpp)
+-  target_link_libraries(base_path_follower_factory-test ${PROJECT_NAME}_lib)
++  target_link_libraries(base_path_follower_factory-test ${PROJECT_NAME}_lib ament_index_cpp::ament_index_cpp)
+ 
+   # parameter_creator-test
+   ament_add_gtest(parameter_creator-test test/parameter_creator-test.cpp)
+-  target_link_libraries(parameter_creator-test ${PROJECT_NAME}_lib)
++  target_link_libraries(parameter_creator-test ${PROJECT_NAME}_lib ament_index_cpp::ament_index_cpp)
+ 
+   # goal_checker_omni-test
+   ament_add_gtest(goal_checker_omni-test
+     test/goal_checker_omni-test.cpp)
+-  target_link_libraries(goal_checker_omni-test ${PROJECT_NAME}_lib)
++  target_link_libraries(goal_checker_omni-test ${PROJECT_NAME}_lib ament_index_cpp::ament_index_cpp)
+ 
+   # goal_checker_diff_drive-test
+   ament_add_gtest(goal_checker_diff_drive-test
+     test/goal_checker_diff_drive-test.cpp)
+-  target_link_libraries(goal_checker_diff_drive-test ${PROJECT_NAME}_lib)
++  target_link_libraries(goal_checker_diff_drive-test ${PROJECT_NAME}_lib ament_index_cpp::ament_index_cpp)
+ 
+   # path_info_creator_test
+   ament_add_gtest(path_info_creator_test test/path_info_creator-test.cpp)
+-  target_link_libraries(path_info_creator_test ${PROJECT_NAME}_lib)
++  target_link_libraries(path_info_creator_test ${PROJECT_NAME}_lib ament_index_cpp::ament_index_cpp)
+ 
+   # nearest_path_point_searcher-test
+   ament_add_gtest(nearest_path_point_searcher-test
+     test/nearest_path_point_searcher-test.cpp)
+-  target_link_libraries(nearest_path_point_searcher-test ${PROJECT_NAME}_lib)
++  target_link_libraries(nearest_path_point_searcher-test ${PROJECT_NAME}_lib ament_index_cpp::ament_index_cpp)
+ 
+   # velocity_calculator_omni-test
+   ament_add_gtest(velocity_calculator_omni-test
+     test/velocity_calculator_omni-test.cpp)
+-  target_link_libraries(velocity_calculator_omni-test ${PROJECT_NAME}_lib)
++  target_link_libraries(velocity_calculator_omni-test ${PROJECT_NAME}_lib ament_index_cpp::ament_index_cpp)
+ 
+   # velocity_calculator_diff_drive-test
+   ament_add_gtest(velocity_calculator_diff_drive-test
+     test/velocity_calculator_diff_drive-test.cpp)
+-  target_link_libraries(velocity_calculator_diff_drive-test ${PROJECT_NAME}_lib)
++  target_link_libraries(velocity_calculator_diff_drive-test ${PROJECT_NAME}_lib ament_index_cpp::ament_index_cpp)
+ 
+   # path_transit_velocity_calculator-test
+   ament_add_gtest(path_transit_velocity_calculator-test
+     test/path_transit_velocity_calculator-test.cpp)
+-  target_link_libraries(path_transit_velocity_calculator-test ${PROJECT_NAME}_lib)
++  target_link_libraries(path_transit_velocity_calculator-test ${PROJECT_NAME}_lib ament_index_cpp::ament_index_cpp)
+ endif()
+ ament_package()
+diff --git a/tmc_base_path_follower/package.xml b/tmc_base_path_follower/package.xml
+index b43f02f..e4b7f01 100644
+--- a/tmc_base_path_follower/package.xml
++++ b/tmc_base_path_follower/package.xml
+@@ -23,6 +23,7 @@
+   <depend>tmc_pose_2d_lib</depend>
+   <depend>tmc_navigation_msgs</depend>
+ 
++  <test_depend>ament_index_cpp</test_depend>
+   <test_depend>ament_cmake_gmock</test_depend>
+   <test_depend>ament_cmake_gtest</test_depend>
+ 
 diff --git a/tmc_base_path_planner/CMakeLists.txt b/tmc_base_path_planner/CMakeLists.txt
-index 2254ec8..6fade94 100644
+index 2254ec8..63e682b 100644
 --- a/tmc_base_path_planner/CMakeLists.txt
 +++ b/tmc_base_path_planner/CMakeLists.txt
 @@ -50,9 +50,6 @@ target_include_directories(${PROJECT_NAME}_lib
@@ -52,8 +145,90 @@ index 2254ec8..6fade94 100644
  ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
  
  add_executable(base_path_planner
+@@ -120,6 +117,8 @@ install(DIRECTORY config
+ )
+ 
+ if(BUILD_TESTING)
++  # Tests include ament_index_cpp headers; upstream forgot to declare it.
++  find_package(ament_index_cpp REQUIRED)
+   find_package(ament_cmake_gmock REQUIRED)
+   find_package(ament_cmake_gtest REQUIRED)
+   find_package(angles REQUIRED)
+@@ -135,50 +134,50 @@ if(BUILD_TESTING)
+     test/base_path_planner_node-test.cpp
+     TIMEOUT 500)
+   ament_target_dependencies(base_path_planner_node-test angles)
+-  target_link_libraries(base_path_planner_node-test ${PROJECT_NAME}_lib)
++  target_link_libraries(base_path_planner_node-test ${PROJECT_NAME}_lib ament_index_cpp::ament_index_cpp)
+   # for base_path_planner_factory
+   ament_add_gtest(base_path_planner_factory-test
+     test/base_path_planner_factory-test.cpp)
+   ament_target_dependencies(base_path_planner_factory-test angles)
+-  target_link_libraries(base_path_planner_factory-test ${PROJECT_NAME}_lib)
++  target_link_libraries(base_path_planner_factory-test ${PROJECT_NAME}_lib ament_index_cpp::ament_index_cpp)
+   # for grid_cells_publisher
+   ament_add_gtest(grid_cells_publisher-test
+     test/grid_cells_publisher-test.cpp
+   )
+-  target_link_libraries(grid_cells_publisher-test ${PROJECT_NAME}_lib)
++  target_link_libraries(grid_cells_publisher-test ${PROJECT_NAME}_lib ament_index_cpp::ament_index_cpp)
+   # for astar_path_planner_factory
+   ament_add_gtest(astar_path_planner_factory-test
+     test/astar_path_planner_factory-test.cpp)
+   ament_target_dependencies(astar_path_planner_factory-test angles)
+-  target_link_libraries(astar_path_planner_factory-test ${PROJECT_NAME}_lib)
++  target_link_libraries(astar_path_planner_factory-test ${PROJECT_NAME}_lib ament_index_cpp::ament_index_cpp)
+ 
+   # for base_path_planner
+   ament_add_gmock(base_path_planner-test
+     test/base_path_planner-test.cpp)
+   ament_target_dependencies(base_path_planner-test angles)
+-  target_link_libraries(base_path_planner-test ${PROJECT_NAME}_lib)
++  target_link_libraries(base_path_planner-test ${PROJECT_NAME}_lib ament_index_cpp::ament_index_cpp)
+   # for map_filter
+   ament_add_gtest(map_filter-test
+     test/map_filter-test.cpp)
+   ament_target_dependencies(map_filter-test console_bridge)
+-  target_link_libraries(map_filter-test ${PROJECT_NAME}_lib)
++  target_link_libraries(map_filter-test ${PROJECT_NAME}_lib ament_index_cpp::ament_index_cpp)
+   # for path_updater
+   ament_add_gtest(path_updater-test
+     test/path_updater-test.cpp)
+   ament_target_dependencies(path_updater-test angles console_bridge)
+-  target_link_libraries(path_updater-test ${PROJECT_NAME}_lib)
++  target_link_libraries(path_updater-test ${PROJECT_NAME}_lib ament_index_cpp::ament_index_cpp)
+   # for condition_checker
+   ament_add_gtest(condition_checker-test
+     test/condition_checker-test.cpp)
+-  target_link_libraries(condition_checker-test ${PROJECT_NAME}_lib)
++  target_link_libraries(condition_checker-test ${PROJECT_NAME}_lib ament_index_cpp::ament_index_cpp)
+   # for path_smoother
+   ament_add_gtest(path_smoother-test
+     test/path_smoother-test.cpp)
+-  target_link_libraries(path_smoother-test ${PROJECT_NAME}_lib)
++  target_link_libraries(path_smoother-test ${PROJECT_NAME}_lib ament_index_cpp::ament_index_cpp)
+   # for astar_path_planner
+   ament_add_gtest(astar_path_planner-test
+     test/astar_path_planner-test.cpp)
+   ament_target_dependencies(astar_path_planner-test console_bridge)
+-  target_link_libraries(astar_path_planner-test ${PROJECT_NAME}_lib)
++  target_link_libraries(astar_path_planner-test ${PROJECT_NAME}_lib ament_index_cpp::ament_index_cpp)
+ endif()
+ ament_package()
+diff --git a/tmc_base_path_planner/package.xml b/tmc_base_path_planner/package.xml
+index 0309717..cb4df60 100644
+--- a/tmc_base_path_planner/package.xml
++++ b/tmc_base_path_planner/package.xml
+@@ -22,6 +22,7 @@
+   <depend>tmc_astar_lib</depend>
+   <depend>tmc_navigation_msgs</depend>
+ 
++  <test_depend>ament_index_cpp</test_depend>
+   <test_depend>ament_cmake_gmock</test_depend>
+   <test_depend>ament_cmake_gtest</test_depend>
+   <test_depend>angles</test_depend>
 diff --git a/tmc_grid_map_server/CMakeLists.txt b/tmc_grid_map_server/CMakeLists.txt
-index 1c4fc62..010f84d 100644
+index 1c4fc62..6afa149 100644
 --- a/tmc_grid_map_server/CMakeLists.txt
 +++ b/tmc_grid_map_server/CMakeLists.txt
 @@ -45,9 +45,6 @@ target_link_libraries(${PROJECT_NAME}_lib
@@ -65,6 +240,54 @@ index 1c4fc62..010f84d 100644
 -)
  ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
  
+ 
+@@ -119,6 +116,8 @@ install(DIRECTORY launch
+ )
+ 
+ if (BUILD_TESTING)
++  # Tests include ament_index_cpp headers; upstream forgot to declare it.
++  find_package(ament_index_cpp REQUIRED)
+   find_package(ament_cmake_gtest REQUIRED)
+   find_package(Boost REQUIRED)
+ 
+@@ -134,7 +133,7 @@ if (BUILD_TESTING)
+     test/grid_map_server_node_test.cpp
+     APPEND_ENV PARAMETER_FILE=grid_map_server_square_test.yaml
+   )
+-  target_link_libraries(grid_map_server_square_test ${PROJECT_NAME}_lib)
++  target_link_libraries(grid_map_server_square_test ${PROJECT_NAME}_lib ament_index_cpp::ament_index_cpp)
+   target_include_directories(grid_map_server_square_test PUBLIC ${Boost_INCLUDE_DIRS})
+ 
+   ament_add_gtest(
+@@ -142,7 +141,7 @@ if (BUILD_TESTING)
+     test/grid_map_server_node_test.cpp
+     APPEND_ENV PARAMETER_FILE=grid_map_server_vertical_test.yaml
+   )
+-  target_link_libraries(grid_map_server_vertical_test ${PROJECT_NAME}_lib)
++  target_link_libraries(grid_map_server_vertical_test ${PROJECT_NAME}_lib ament_index_cpp::ament_index_cpp)
+   target_include_directories(grid_map_server_vertical_test PUBLIC ${Boost_INCLUDE_DIRS})
+ 
+   ament_add_gtest(
+@@ -150,7 +149,7 @@ if (BUILD_TESTING)
+     test/grid_map_server_node_test.cpp
+     APPEND_ENV PARAMETER_FILE=grid_map_server_horizontal_test.yaml
+   )
+-  target_link_libraries(grid_map_server_horizontal_test ${PROJECT_NAME}_lib)
++  target_link_libraries(grid_map_server_horizontal_test ${PROJECT_NAME}_lib ament_index_cpp::ament_index_cpp)
+   target_include_directories(grid_map_server_horizontal_test PUBLIC ${Boost_INCLUDE_DIRS})
+ endif()
+ 
+diff --git a/tmc_grid_map_server/package.xml b/tmc_grid_map_server/package.xml
+index 9d25e4c..731cc52 100644
+--- a/tmc_grid_map_server/package.xml
++++ b/tmc_grid_map_server/package.xml
+@@ -21,6 +21,7 @@
+   <depend>tf2_geometry_msgs</depend>
+   <depend>tf2_ros</depend>
+ 
++  <test_depend>ament_index_cpp</test_depend>
+   <test_depend>ament_cmake_gtest</test_depend>
+   <test_depend>boost</test_depend>
  
 diff --git a/tmc_laser_2d_localizer/CMakeLists.txt b/tmc_laser_2d_localizer/CMakeLists.txt
 index 450c2b2..75d51b5 100644
@@ -99,7 +322,7 @@ index e00d004..80ca4a7 100644
  #include <tmc_navigation_msgs/srv/set_localization_score_limit.hpp>
  #include <tmc_pose_2d_lib/distance_map.hpp>
 diff --git a/tmc_map_merger/CMakeLists.txt b/tmc_map_merger/CMakeLists.txt
-index d3b2a25..7c96c73 100644
+index d3b2a25..ffef896 100644
 --- a/tmc_map_merger/CMakeLists.txt
 +++ b/tmc_map_merger/CMakeLists.txt
 @@ -39,9 +39,6 @@ target_include_directories(${PROJECT_NAME}_lib
@@ -112,6 +335,63 @@ index d3b2a25..7c96c73 100644
  ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
  
  
+@@ -101,6 +98,8 @@ install(DIRECTORY config
+ )
+ 
+ if (BUILD_TESTING)
++  # Tests include ament_index_cpp headers; upstream forgot to declare it.
++  find_package(ament_index_cpp REQUIRED)
+   find_package(ament_cmake_gtest REQUIRED)
+ 
+   install(DIRECTORY test/parameter
+@@ -108,27 +107,27 @@ if (BUILD_TESTING)
+   )
+ 
+   ament_add_gtest(map-test test/map-test.cpp)
+-  target_link_libraries(map-test ${PROJECT_NAME}_lib)
++  target_link_libraries(map-test ${PROJECT_NAME}_lib ament_index_cpp::ament_index_cpp)
+ 
+   ament_add_gtest(map_drawer-test test/map_drawer-test.cpp)
+-  target_link_libraries(map_drawer-test ${PROJECT_NAME}_lib)
++  target_link_libraries(map_drawer-test ${PROJECT_NAME}_lib ament_index_cpp::ament_index_cpp)
+ 
+   ament_add_gtest(temporal_memories-test test/temporal_memories-test.cpp)
+-  target_link_libraries(temporal_memories-test ${PROJECT_NAME}_lib)
++  target_link_libraries(temporal_memories-test ${PROJECT_NAME}_lib ament_index_cpp::ament_index_cpp)
+ 
+   ament_add_gtest(point_cloud_filter-test test/point_cloud_filter-test.cpp)
+-  target_link_libraries(point_cloud_filter-test ${PROJECT_NAME}_lib)
++  target_link_libraries(point_cloud_filter-test ${PROJECT_NAME}_lib ament_index_cpp::ament_index_cpp)
+ 
+   ament_add_gtest(map_input-test test/map_input-test.cpp)
+-  target_link_libraries(map_input-test ${PROJECT_NAME}_lib)
++  target_link_libraries(map_input-test ${PROJECT_NAME}_lib ament_index_cpp::ament_index_cpp)
+ 
+   ament_add_gtest(param-test test/param-test.cpp)
+-  target_link_libraries(param-test ${PROJECT_NAME}_lib)
++  target_link_libraries(param-test ${PROJECT_NAME}_lib ament_index_cpp::ament_index_cpp)
+ 
+   ament_add_gtest(map_converter-test test/map_converter-test.cpp)
+-  target_link_libraries(map_converter-test ${PROJECT_NAME}_lib)
++  target_link_libraries(map_converter-test ${PROJECT_NAME}_lib ament_index_cpp::ament_index_cpp)
+ 
+   ament_add_gtest(map_merger_node-test test/map_merger_node-test.cpp)
+-  target_link_libraries(map_merger_node-test ${PROJECT_NAME}_lib)
++  target_link_libraries(map_merger_node-test ${PROJECT_NAME}_lib ament_index_cpp::ament_index_cpp)
+ endif()
+ ament_package()
+diff --git a/tmc_map_merger/package.xml b/tmc_map_merger/package.xml
+index 2046826..3a773ea 100644
+--- a/tmc_map_merger/package.xml
++++ b/tmc_map_merger/package.xml
+@@ -21,6 +21,7 @@
+   <depend>tf2_geometry_msgs</depend>
+   <depend>tf2_ros</depend>
+ 
++  <test_depend>ament_index_cpp</test_depend>
+   <test_depend>ament_cmake_gtest</test_depend>
+ 
+   <export>
 diff --git a/tmc_map_merger/src/map_converter.hpp b/tmc_map_merger/src/map_converter.hpp
 index 8cc8a7a..1badcd1 100644
 --- a/tmc_map_merger/src/map_converter.hpp
@@ -151,7 +431,7 @@ index 95196b8..569096e 100644
  
  namespace tmc_map_merger {
 diff --git a/tmc_marker_based_localizer/CMakeLists.txt b/tmc_marker_based_localizer/CMakeLists.txt
-index 955d17c..80b0b39 100644
+index 955d17c..60d8467 100644
 --- a/tmc_marker_based_localizer/CMakeLists.txt
 +++ b/tmc_marker_based_localizer/CMakeLists.txt
 @@ -52,9 +52,6 @@ target_link_libraries(${PROJECT_NAME}_lib
@@ -164,6 +444,44 @@ index 955d17c..80b0b39 100644
  ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
  
  add_executable(marker_based_localizer
+@@ -100,6 +97,8 @@ install(DIRECTORY config
+ )
+ 
+ if(BUILD_TESTING)
++  # Tests include ament_index_cpp headers; upstream forgot to declare it.
++  find_package(ament_index_cpp REQUIRED)
+   find_package(ament_cmake_gtest REQUIRED)
+   install(DIRECTORY test/parameter
+     DESTINATION share/${PROJECT_NAME}/test
+@@ -110,14 +109,14 @@ if(BUILD_TESTING)
+     test/marker_based_localizer-test_node.cpp
+     test/marker_based_localizer-test.cpp
+   )
+-  target_link_libraries(marker_based_localizer_test ${PROJECT_NAME}_lib)
++  target_link_libraries(marker_based_localizer_test ${PROJECT_NAME}_lib ament_index_cpp::ament_index_cpp)
+ 
+   ament_add_gtest(marker_based_localizer_no_joint_list_test
+     test/marker_based_localizer-test_common.cpp
+     test/marker_based_localizer-test_node.cpp
+     test/marker_based_localizer_no_joint_list-test.cpp
+   )
+-  target_link_libraries(marker_based_localizer_no_joint_list_test ${PROJECT_NAME}_lib)
++  target_link_libraries(marker_based_localizer_no_joint_list_test ${PROJECT_NAME}_lib ament_index_cpp::ament_index_cpp)
+ 
+ endif()
+ ament_package()
+diff --git a/tmc_marker_based_localizer/package.xml b/tmc_marker_based_localizer/package.xml
+index 4a6c86b..3947a99 100644
+--- a/tmc_marker_based_localizer/package.xml
++++ b/tmc_marker_based_localizer/package.xml
+@@ -26,6 +26,7 @@
+   <depend>tmc_eigen_bridge</depend>
+   <depend>yaml-cpp</depend>
+ 
++  <test_depend>ament_index_cpp</test_depend>
+   <test_depend>ament_cmake_gtest</test_depend>
+ 
+   <export>
 diff --git a/tmc_move_base/CMakeLists.txt b/tmc_move_base/CMakeLists.txt
 index 1591ade..23af736 100644
 --- a/tmc_move_base/CMakeLists.txt
@@ -179,7 +497,7 @@ index 1591ade..23af736 100644
  
  
 diff --git a/tmc_odometry_switcher/CMakeLists.txt b/tmc_odometry_switcher/CMakeLists.txt
-index 0f10087..39ff510 100644
+index 0f10087..e18a9d8 100644
 --- a/tmc_odometry_switcher/CMakeLists.txt
 +++ b/tmc_odometry_switcher/CMakeLists.txt
 @@ -34,9 +34,6 @@ target_include_directories(${PROJECT_NAME}_lib
@@ -192,6 +510,36 @@ index 0f10087..39ff510 100644
  ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
  
  add_executable(odometry_switcher
+@@ -100,6 +97,8 @@ install(DIRECTORY config
+ )
+ 
+ if(BUILD_TESTING)
++  # Tests include ament_index_cpp headers; upstream forgot to declare it.
++  find_package(ament_index_cpp REQUIRED)
+   install(DIRECTORY test/parameter
+     DESTINATION share/${PROJECT_NAME}/test
+   )
+@@ -108,7 +107,7 @@ if(BUILD_TESTING)
+   find_package(angles REQUIRED)
+ 
+   ament_add_gtest(odometry_switcher-test test/odometry_switcher-test.cpp)
+-  target_link_libraries(odometry_switcher-test ${PROJECT_NAME}_lib)
++  target_link_libraries(odometry_switcher-test ${PROJECT_NAME}_lib ament_index_cpp::ament_index_cpp)
+   ament_target_dependencies(odometry_switcher-test angles)
+ endif()
+ ament_package()
+diff --git a/tmc_odometry_switcher/package.xml b/tmc_odometry_switcher/package.xml
+index 0aa5114..1a46dd2 100644
+--- a/tmc_odometry_switcher/package.xml
++++ b/tmc_odometry_switcher/package.xml
+@@ -20,6 +20,7 @@
+   <depend>tf2_ros</depend>
+   <depend>tmc_navigation_msgs</depend>
+ 
++  <test_depend>ament_index_cpp</test_depend>
+   <test_depend>ament_cmake_gtest</test_depend>
+   <test_depend>angles</test_depend>
+ 
 diff --git a/tmc_pose_2d_lib/CMakeLists.txt b/tmc_pose_2d_lib/CMakeLists.txt
 index bed7884..2ad94ce 100644
 --- a/tmc_pose_2d_lib/CMakeLists.txt
@@ -207,7 +555,7 @@ index bed7884..2ad94ce 100644
  
  target_link_libraries(ros_if pose_2d)
 diff --git a/tmc_pose_integrator/CMakeLists.txt b/tmc_pose_integrator/CMakeLists.txt
-index 4ab3c54..53dff2e 100644
+index 4ab3c54..69ffb9f 100644
 --- a/tmc_pose_integrator/CMakeLists.txt
 +++ b/tmc_pose_integrator/CMakeLists.txt
 @@ -39,9 +39,6 @@ target_include_directories(${PROJECT_NAME}_lib
@@ -220,8 +568,41 @@ index 4ab3c54..53dff2e 100644
  ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
  
  add_executable(pose_integrator
+@@ -92,6 +89,10 @@ install(DIRECTORY config
+ 
+ if(BUILD_TESTING)
+   find_package(ament_cmake_gtest REQUIRED)
++  # The test includes ament_index_cpp/get_package_share_directory.hpp but
++  # upstream never declared the dependency, so any build with testing
++  # enabled (the colcon default) failed to compile.
++  find_package(ament_index_cpp REQUIRED)
+ 
+   install(DIRECTORY test/parameter
+     DESTINATION share/${PROJECT_NAME}/test
+@@ -101,6 +102,8 @@ if(BUILD_TESTING)
+     pose_integrator_test
+     test/pose_integrator-test.cpp
+     TIMEOUT 100)
+-  target_link_libraries(pose_integrator_test ${PROJECT_NAME}_lib)
++  target_link_libraries(pose_integrator_test
++    ${PROJECT_NAME}_lib
++    ament_index_cpp::ament_index_cpp)
+ endif()
+ ament_package()
+diff --git a/tmc_pose_integrator/package.xml b/tmc_pose_integrator/package.xml
+index dbff397..bf06298 100644
+--- a/tmc_pose_integrator/package.xml
++++ b/tmc_pose_integrator/package.xml
+@@ -23,6 +23,7 @@
+   <depend>tf2_ros</depend>
+ 
+   <test_depend>ament_cmake_gtest</test_depend>
++  <test_depend>ament_index_cpp</test_depend>
+ 
+   <export>
+     <build_type>ament_cmake</build_type>
 diff --git a/tmc_safety_velocity_limiter/CMakeLists.txt b/tmc_safety_velocity_limiter/CMakeLists.txt
-index 9daf3c1..c5d38ff 100644
+index 9daf3c1..c80d144 100644
 --- a/tmc_safety_velocity_limiter/CMakeLists.txt
 +++ b/tmc_safety_velocity_limiter/CMakeLists.txt
 @@ -54,9 +54,6 @@ target_include_directories(${PROJECT_NAME}_lib
@@ -234,6 +615,36 @@ index 9daf3c1..c5d38ff 100644
  ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
  
  add_executable(safety_velocity_limiter
+@@ -122,6 +119,8 @@ install(DIRECTORY launch
+ )
+ 
+ if(BUILD_TESTING)
++  # Tests include ament_index_cpp headers; upstream forgot to declare it.
++  find_package(ament_index_cpp REQUIRED)
+   find_package(ament_cmake_gtest REQUIRED)
+ 
+   install(DIRECTORY test/parameter
+@@ -135,7 +134,7 @@ if(BUILD_TESTING)
+   ament_target_dependencies(safety_velocity_limiter_test
+     tf2_geometry_msgs
+   )
+-  target_link_libraries(safety_velocity_limiter_test ${PROJECT_NAME}_lib)
++  target_link_libraries(safety_velocity_limiter_test ${PROJECT_NAME}_lib ament_index_cpp::ament_index_cpp)
+ endif()
+ 
+ ament_package()
+diff --git a/tmc_safety_velocity_limiter/package.xml b/tmc_safety_velocity_limiter/package.xml
+index ff90003..7a683c3 100644
+--- a/tmc_safety_velocity_limiter/package.xml
++++ b/tmc_safety_velocity_limiter/package.xml
+@@ -22,6 +22,7 @@
+   <depend>tf2_geometry_msgs</depend>
+   <depend>visualization_msgs</depend>
+ 
++  <test_depend>ament_index_cpp</test_depend>
+   <test_depend>ament_cmake_gtest</test_depend>
+ 
+   <export>
 diff --git a/tmc_safety_velocity_limiter/src/occupancy.cpp b/tmc_safety_velocity_limiter/src/occupancy.cpp
 index 0588218..305c251 100644
 --- a/tmc_safety_velocity_limiter/src/occupancy.cpp
@@ -248,7 +659,7 @@ index 0588218..305c251 100644
  
  #include "param.hpp"
 diff --git a/tmc_velocity_switcher/CMakeLists.txt b/tmc_velocity_switcher/CMakeLists.txt
-index 7166ffd..c7b17cb 100644
+index 7166ffd..0120a17 100644
 --- a/tmc_velocity_switcher/CMakeLists.txt
 +++ b/tmc_velocity_switcher/CMakeLists.txt
 @@ -29,9 +29,6 @@ target_include_directories(${PROJECT_NAME}_lib
@@ -261,6 +672,35 @@ index 7166ffd..c7b17cb 100644
  ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
  
  add_executable(velocity_switcher
+@@ -82,6 +79,8 @@ install(DIRECTORY launch
+ )
+ 
+ if(BUILD_TESTING)
++  # Tests include ament_index_cpp headers; upstream forgot to declare it.
++  find_package(ament_index_cpp REQUIRED)
+   install(DIRECTORY test/parameter
+     DESTINATION share/${PROJECT_NAME}/test
+   )
+@@ -91,6 +90,6 @@ if(BUILD_TESTING)
+   ament_add_gtest(velocity_switcher-test
+     test/velocity_switcher-test.cpp
+     TIMEOUT 120)
+-  target_link_libraries(velocity_switcher-test ${PROJECT_NAME}_lib)
++  target_link_libraries(velocity_switcher-test ${PROJECT_NAME}_lib ament_index_cpp::ament_index_cpp)
+ endif()
+ ament_package()
+diff --git a/tmc_velocity_switcher/package.xml b/tmc_velocity_switcher/package.xml
+index 102ab77..30052c9 100644
+--- a/tmc_velocity_switcher/package.xml
++++ b/tmc_velocity_switcher/package.xml
+@@ -13,6 +13,7 @@
+   <depend>std_msgs</depend>
+   <depend>geometry_msgs</depend>
+ 
++  <test_depend>ament_index_cpp</test_depend>
+   <test_depend>ament_cmake_gtest</test_depend>
+ 
+   <export>
 diff --git a/tmc_viewpoint_controller/CMakeLists.txt b/tmc_viewpoint_controller/CMakeLists.txt
 index e40d651..03ccc7b 100644
 --- a/tmc_viewpoint_controller/CMakeLists.txt
