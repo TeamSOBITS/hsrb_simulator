@@ -20,6 +20,7 @@
     <a href="#実行・操作方法">実行・操作方法</a>
       <ul>
         <li><a href="#シミュレータを起動">シミュレータを起動</a></li>
+        <li><a href="#gzなしでロボット単体を確認">gzなしでロボット単体を確認</a></li>
         <li><a href="#台車を動かす">台車を動かす</a></li>
         <li><a href="#アーム・首を動かす">アーム・首を動かす</a></li>
         <li><a href="#グリッパーを操作">グリッパーを操作</a></li>
@@ -51,7 +52,7 @@ Jazzy／Gazebo Harmonic世代のAPIでパッチ一式と，
 
 現在は以下の機能が動作確認済み．
 
-- 公式オムニ台車コントローラによる全方向移動（前後・**真横**・旋回）
+- 公式オムニ台車コントローラによる全方向移動
 - アーム5関節・首2関節のJointTrajectoryController制御
 - グリッパーの開閉（開き幅指定）
 - センサー一式のROS 2ブリッジ（LiDAR，IMU，頭部RGB-D／ステレオ／広角カメラ，手部カメラ，手首力覚）
@@ -101,8 +102,7 @@ Jazzy／Gazebo Harmonic世代のAPIでパッチ一式と，
    $ source ~/colcon_ws/install/setup.bash
    ```
 
-`install.sh`は次の3工程を自動で行います（ビルドは行いません）．
-全工程は冪等なので，途中で失敗しても再実行できます．
+`install.sh`は次の3工程を自動で行います．
 
 | 工程 | 内容 |
 | --- | --- |
@@ -134,15 +134,39 @@ Gazeboが起動し，HSRBがspawnされ，コントローラ6基（オムニ台�
 | `robot_pos_x` / `robot_pos_y` / `robot_pos_z` | `0.0` | spawn座標 |
 | `robot_rpy_Y` | `0.0` | spawn時のyaw |
 | `robot_name` | `hsrb` | Gazebo上のモデル名 |
+| `start_gazebo` | `True` | `False`にすると，gz simを自前で起動せず，**既に起動済みのworld**へHSRBをspawnする（下記参照） |
 
 > [!IMPORTANT]
 > 独自のworldを使う場合，worldに`gz::sim::systems::Sensors`・`Imu`・`ForceTorque`の
 > 3プラグインが入っていないと，センサーのトピックは存在するのにデータが一切流れません．
 > 同梱の`empty.sdf`は対応済みです（<a href="#パッチの内訳">パッチの内訳</a>参照）．
 
+#### 起動済みworldへのspawn（`start_gazebo:=False`）
+
+他パッケージが起動したworldにHSRBを後から
+spawnさせたい場合は，`gazebo_bringup.launch.py`自体を`start_gazebo:=False`で呼びます．
+
+```sh
+$ ros2 launch hsrb_gazebo_bringup gazebo_bringup.launch.py \
+    start_gazebo:=False robot_name:=hsrb robot_pos_x:=1.0 robot_pos_y:=2.0
+```
+
+> [!NOTE]
+> `spawn_hsrb.launch.py`（`spawn_hsr.py`経由）は`gazebo_ros/spawn_entity.py`を使う
+> Gazebo-Classic向けの実装で，gz sim（Gazebo Harmonic）では動作しません．
+> 起動済みworldへのspawnは上記の`start_gazebo:=False`を使ってください．
+
+### ロボット単体の確認
+
+```sh
+$ ros2 launch hsrb_description hsrb_display.launch.py
+```
+
+joint_state_publisher_guiのスライダーで各関節を動かして確認できます．
+
 ### 台車を動かす
 
-オムニ台車なので，前後（`linear.x`）・**真横（`linear.y`）**・旋回（`angular.z`）が全て使えます．
+前後（`linear.x`）・真横（`linear.y`）・旋回（`angular.z`）
 
 ```sh
 $ ros2 topic pub -r 10 /omni_base_controller/cmd_vel geometry_msgs/msg/Twist \
@@ -180,6 +204,22 @@ $ ros2 topic hz /imu/data                                  # IMU (~100Hz)
 $ ros2 topic hz /head_rgbd_sensor/rgb/image_rect_color     # RGB-D (~30Hz)
 $ ros2 topic hz /wrist_wrench/raw                          # 手首力覚 (~30Hz)
 ```
+
+同梱のrviz2設定でも見た目の確認ができます．
+
+```sh
+$ ros2 run rviz2 rviz2 -d $(ros2 pkg prefix hsrb_gazebo_bringup)/share/hsrb_gazebo_bringup/rviz/gazebo.rviz \
+    --ros-args -p use_sim_time:=true
+```
+
+RobotModel・LiDAR・RGBカメラ・RGBD点群（色付き）を表示します．
+
+> [!NOTE]
+> RobotModelは詳細メッシュではなく衝突形状（簡易形状）で表示しています．
+> 検証したGPU環境（8GB VRAM）では「詳細メッシュ＋カメラ表示」を同時に有効にすると
+> rviz2がOgre／GPUリソース不足で確実にクラッシュしたため，簡易形状に変更することで
+> カメラ・点群表示と両立させています．VRAMに余裕がある環境では，RobotModelの
+> `Visual Enabled`を`true`に戻しても問題ない場合があります．
 
 <p align="right">(<a href="#readme-top">上に戻る</a>)</p>
 
@@ -222,6 +262,7 @@ $ git diff > ~/colcon_ws/src/hsrb_simulator/patches/<対象リポジトリ>.patc
 | 機能 | トピック | 型 |
 | --- | --- | --- |
 | 台車速度指令 | `/omni_base_controller/cmd_vel` | `geometry_msgs/Twist` |
+| 台車速度指令（gz側，外部GUI等向け） | gzトピック`/<robot_name>/cmd_vel` → 上記に自動bridge | `gz.msgs.Twist` |
 | アーム | `/arm_trajectory_controller/joint_trajectory` | `trajectory_msgs/JointTrajectory` |
 | 首 | `/head_trajectory_controller/joint_trajectory` | `trajectory_msgs/JointTrajectory` |
 | グリッパー | `/gripper_controller/command_distance` | `std_msgs/Float32` |
@@ -246,6 +287,8 @@ $ git diff > ~/colcon_ws/src/hsrb_simulator/patches/<対象リポジトリ>.patc
 - [x] 依存取得〜ビルドまでの冪等な`install.sh`
 - [x] オムニ台車・アーム・首・グリッパーの動作確認
 - [x] センサー一式の動作確認（worldへのセンサーシステム追加）
+- [x] 起動済みworldへの動的spawn対応（`start_gazebo:=False`）とgz側cmd_velのbridge
+- [x] rviz2標準レイアウトの同梱
 
 <p align="right">(<a href="#readme-top">上に戻る</a>)</p>
 
@@ -283,6 +326,7 @@ $ git diff > ~/colcon_ws/src/hsrb_simulator/patches/<対象リポジトリ>.patc
 ├── hsrb_gazebo_bringup/
 │   ├── config/          # gz_ros2_controlのコントローラ設定 (hsrb / hsrc)
 │   ├── launch/          # 起動launch一式 (bringup / spawn / relay / sensor frames)
+│   ├── rviz/            # gazebo.rviz (RobotModel簡易形状 + LiDAR + RGB + RGBD点群)
 │   └── worlds/          # empty.sdf (センサーシステム対応済み)
 ├── hsrb_gz_ros2_control/        # HSR専用のgz_ros2_controlハードウェアプラグイン
 └── hsrb_gripper_fake_interface/ # グリッパーのfakeハードウェアインターフェース
@@ -297,9 +341,10 @@ $ git diff > ~/colcon_ws/src/hsrb_simulator/patches/<対象リポジトリ>.patc
 | --- | --- |
 | `install.sh` | 依存clone・パッチ適用・ビルドの自動セットアップ（冪等） |
 | `patches/` | Jazzy／Gazebo Harmonic対応パッチ（git diff形式） |
-| `hsrb_gazebo_bringup/launch/gazebo_bringup.launch.py` | gz起動〜spawn〜コントローラ〜ブリッジまでの本体launch |
-| `hsrb_gazebo_bringup/launch/spawn_hsrb.launch.py` | 起動済みworldへHSRBをspawnするlaunch |
+| `hsrb_gazebo_bringup/launch/gazebo_bringup.launch.py` | gz起動〜spawn〜コントローラ〜ブリッジまでの本体launch．`start_gazebo:=False`で起動済みworldへのspawnにも対応 |
+| `hsrb_gazebo_bringup/launch/spawn_hsrb.launch.py` | `spawn_hsr.py`（Gazebo-Classic向け）を呼ぶ上流由来のlaunch．gz simでは動作しないため使用しない |
 | `hsrb_gazebo_bringup/config/gazebo_ros2_control_hsrb.yaml` | コントローラ定義（オムニ台車・アーム・首・グリッパー等） |
+| `hsrb_gazebo_bringup/rviz/gazebo.rviz` | rviz2の標準レイアウト（RobotModel簡易形状 + LiDAR + RGBカメラ + RGBD点群） |
 | `hsrb_gz_ros2_control/` | gz_ros2_control用のHSRハードウェアプラグイン（グリッパーシミュレーション込み） |
 | `hsrb_gripper_fake_interface/` | グリッパーfakeインターフェース |
 

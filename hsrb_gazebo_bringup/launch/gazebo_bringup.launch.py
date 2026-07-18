@@ -72,10 +72,20 @@ def declare_arguments():
 
     declared_arguments.append(DeclareLaunchArgument(
         'robot_name', default_value='hsrb', description='Robot name'))
+    declared_arguments.append(DeclareLaunchArgument(
+        'start_gazebo', default_value='True',
+        description='Launch gz sim. Set False to spawn the robot into a '
+                    'world that is already running (e.g. guider).'))
     return declared_arguments
 
 
+def _start_gazebo_enabled(context: LaunchContext, args: dict) -> bool:
+    return context.perform_substitution(args['start_gazebo']).lower() in ('true', '1')
+
+
 def gzsim_launch(context: LaunchContext, args: dict):
+    if not _start_gazebo_enabled(context, args):
+        return []
     world_file_name = context.perform_substitution(args['world_file_name'])
     launch_path = os.path.join(get_package_share_directory('ros_gz_sim'), 'launch', 'gz_sim.launch.py')
     return [IncludeLaunchDescription(PythonLaunchDescriptionSource([launch_path]),
@@ -118,11 +128,21 @@ def spwan_entity_node(context: LaunchContext, args: dict):
 
 def gz_parameter_bridge_node(context: LaunchContext, args: dict):
     robot_name_value = context.perform_substitution(args['robot_name'])
+    start_gazebo = _start_gazebo_enabled(context, args)
 
     # “@” for bidirectional mode, “[” for one-way mode. Bidirectional mode often causes trouble and should be avoided as much as possible
-    argument_list = [
-        '/clock@rosgraph_msgs/msg/Clock[ignition.msgs.Clock',
+    argument_list = []
+    # When spawning into an already-running world (start_gazebo:=False) the
+    # host launch already bridges /clock; a second bridge would put a
+    # competing publisher on it, so only bridge the clock when we own gz sim.
+    if start_gazebo:
+        argument_list.append('/clock@rosgraph_msgs/msg/Clock[ignition.msgs.Clock')
+    argument_list += [
         f'/model/{robot_name_value}/odometry@nav_msgs/msg/Odometry[ignition.msgs.Odometry',
+        # Teleop: the guider Robot Manager panel (and any external tool)
+        # publishes gz.msgs.Twist on the gz topic /<robot_name>/cmd_vel;
+        # bridge it to HSRB's (global) omni base controller command topic.
+        f'/{robot_name_value}/cmd_vel@geometry_msgs/msg/Twist[gz.msgs.Twist',
         '/base_range_sensor/scan@sensor_msgs/msg/LaserScan[ignition.msgs.LaserScan',
         '/base_imu/data@sensor_msgs/msg/Imu[ignition.msgs.IMU',
         '/wrist_wrench/raw@geometry_msgs/msg/WrenchStamped[ignition.msgs.Wrench',
@@ -141,6 +161,7 @@ def gz_parameter_bridge_node(context: LaunchContext, args: dict):
     ]
 
     remapping_list = [
+        (f'/{robot_name_value}/cmd_vel', '/omni_base_controller/cmd_vel'),
         ('/base_range_sensor/scan', '/scan'),
         ('/base_imu/data', '/imu/data'),
         ('/head_center_camera/image_rect_color', '/head_center_camera/image_raw'),
