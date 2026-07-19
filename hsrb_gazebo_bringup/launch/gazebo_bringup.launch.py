@@ -76,11 +76,22 @@ def declare_arguments():
         'start_gazebo', default_value='True',
         description='Launch gz sim. Set False to spawn the robot into a '
                     'world that is already running (e.g. guider).'))
+    declared_arguments.append(DeclareLaunchArgument(
+        'spawn_entity', default_value='True',
+        description='False re-attaches to a gz entity that already exists '
+                    '(e.g. guider parked it out of sight instead of '
+                    'removing it) instead of spawning a new one. Skips '
+                    'spwan_entity_node and starts the controller spawners '
+                    'immediately instead of waiting on its exit.'))
     return declared_arguments
 
 
 def _start_gazebo_enabled(context: LaunchContext, args: dict) -> bool:
     return context.perform_substitution(args['start_gazebo']).lower() in ('true', '1')
+
+
+def _spawn_entity_enabled(context: LaunchContext, args: dict) -> bool:
+    return context.perform_substitution(args['spawn_entity']).lower() in ('true', '1')
 
 
 def gzsim_launch(context: LaunchContext, args: dict):
@@ -114,6 +125,12 @@ def robot_state_publisher_node(context: LaunchContext, args: dict):
 
 
 def spwan_entity_node(context: LaunchContext, args: dict):
+    if not _spawn_entity_enabled(context, args):
+        # Re-attach path (see the spawn_entity argument above): the
+        # entity already exists (parked, not removed), so creating a
+        # second one -- which -allow_renaming would silently allow -- is
+        # skipped. Everything else below still restarts fresh.
+        return []
     return [Node(package='ros_gz_sim',
                  executable='create',
                  output='screen',
