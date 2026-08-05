@@ -135,6 +135,8 @@ Gazeboが起動し，HSRBがspawnされ，コントローラ6基（オムニ台�
 | `robot_rpy_Y` | `0.0` | spawn時のyaw |
 | `robot_name` | `hsrb` | Gazebo上のモデル名 |
 | `start_gazebo` | `True` | `False`にすると，gz simを自前で起動せず，**既に起動済みのworld**へHSRBをspawnする（下記参照） |
+| `spawn_entity` | `True` | `False`にすると，**既に存在するgzエンティティに再接続**する（spawnし直さず，コントローラ類だけを起動し直す）．退避させておいたHSRBを再表示する用途 |
+| `bridge_sensors` | `True` | `False`にすると，**描画センサー（LiDARと6つのカメラ）をbridgeしない**．制御に必要なトピックだけが残る（下記参照） |
 
 > [!IMPORTANT]
 > 独自のworldを使う場合，worldに`gz::sim::systems::Sensors`・`Imu`・`ForceTorque`の
@@ -150,6 +152,18 @@ spawnさせたい場合は，`gazebo_bringup.launch.py`自体を`start_gazebo:=F
 $ ros2 launch hsrb_gazebo_bringup gazebo_bringup.launch.py \
     start_gazebo:=False robot_name:=hsrb robot_pos_x:=1.0 robot_pos_y:=2.0
 ```
+
+#### センサーのbridgeを止める（`bridge_sensors:=False`）
+
+HSRBのセンサーは`<always_on>0</always_on>`なので，**購読者が居ない間はgzが描画しません**．
+裏を返すと，bridgeしていること自体が描画コストを発生させます．
+LiDARと6つのカメラを合わせると概算で 30 Mpix/s になり，HSRBを1体出しただけで
+RTF が落ちる主因になります．
+
+`bridge_sensors:=False` にすると，これらをbridgeせずに起動します．
+外側のアプリケーションが自前でセンサーごとのbridgeを持ち，
+必要なものだけを都度ONにしたい場合に使ってください
+（既定は`True`なので，単体で使う限り従来どおりです）．
 
 > [!NOTE]
 > `spawn_hsrb.launch.py`（`spawn_hsr.py`経由）は`gazebo_ros/spawn_entity.py`を使う
@@ -288,6 +302,8 @@ $ git diff > ~/colcon_ws/src/hsrb_simulator/patches/<対象リポジトリ>.patc
 - [x] オムニ台車・アーム・首・グリッパーの動作確認
 - [x] センサー一式の動作確認（worldへのセンサーシステム追加）
 - [x] 起動済みworldへの動的spawn対応（`start_gazebo:=False`）とgz側cmd_velのbridge
+- [x] 既存エンティティへの再接続（`spawn_entity:=False`）
+- [x] 描画センサーのbridgeを外部に委ねる選択肢（`bridge_sensors:=False`）
 - [x] rviz2標準レイアウトの同梱
 
 <p align="right">(<a href="#readme-top">上に戻る</a>)</p>

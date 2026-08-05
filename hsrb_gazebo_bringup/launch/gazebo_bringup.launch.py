@@ -83,6 +83,17 @@ def declare_arguments():
                     'removing it) instead of spawning a new one. Skips '
                     'spwan_entity_node and starts the controller spawners '
                     'immediately instead of waiting on its exit.'))
+    declared_arguments.append(DeclareLaunchArgument(
+        'bridge_sensors', default_value='True',
+        description='False omits every rendering sensor (lidar + the six '
+                    'cameras) from this launch\'s parameter_bridge, leaving '
+                    'only the control-plane topics. HSRB\'s sensors are '
+                    '<always_on>0</always_on>, so gz stops rendering them '
+                    'entirely once nothing subscribes -- which is exactly '
+                    'what makes them a real RTF cost while bridged. Set '
+                    'False when a host application (e.g. guider) runs its '
+                    'own per-sensor bridges so the user can turn each '
+                    'group on only when needed.'))
     return declared_arguments
 
 
@@ -92,6 +103,10 @@ def _start_gazebo_enabled(context: LaunchContext, args: dict) -> bool:
 
 def _spawn_entity_enabled(context: LaunchContext, args: dict) -> bool:
     return context.perform_substitution(args['spawn_entity']).lower() in ('true', '1')
+
+
+def _bridge_sensors_enabled(context: LaunchContext, args: dict) -> bool:
+    return context.perform_substitution(args['bridge_sensors']).lower() in ('true', '1')
 
 
 def gzsim_launch(context: LaunchContext, args: dict):
@@ -154,37 +169,53 @@ def gz_parameter_bridge_node(context: LaunchContext, args: dict):
     # competing publisher on it, so only bridge the clock when we own gz sim.
     if start_gazebo:
         argument_list.append('/clock@rosgraph_msgs/msg/Clock[ignition.msgs.Clock')
+    # Control-plane topics: no rendering cost, and the robot is not
+    # controllable without them, so these are bridged unconditionally.
+    # (base_imu / wrist_wrench are non-rendering sensors -- an IMU and a
+    # force-torque sensor -- so they cost nothing to keep on.)
     argument_list += [
         f'/model/{robot_name_value}/odometry@nav_msgs/msg/Odometry[ignition.msgs.Odometry',
         # Teleop: the guider Robot Manager panel (and any external tool)
         # publishes gz.msgs.Twist on the gz topic /<robot_name>/cmd_vel;
         # bridge it to HSRB's (global) omni base controller command topic.
         f'/{robot_name_value}/cmd_vel@geometry_msgs/msg/Twist[gz.msgs.Twist',
-        '/base_range_sensor/scan@sensor_msgs/msg/LaserScan[ignition.msgs.LaserScan',
         '/base_imu/data@sensor_msgs/msg/Imu[ignition.msgs.IMU',
         '/wrist_wrench/raw@geometry_msgs/msg/WrenchStamped[ignition.msgs.Wrench',
-        '/hand_camera/image_rect_color@sensor_msgs/msg/Image[ignition.msgs.Image',
-        '/hand_camera/camera_info@sensor_msgs/msg/CameraInfo[ignition.msgs.CameraInfo',
-        '/head_center_camera/image_rect_color@sensor_msgs/msg/Image[ignition.msgs.Image',
-        '/head_center_camera/camera_info@sensor_msgs/msg/CameraInfo[ignition.msgs.CameraInfo',
-        '/head_l_stereo_camera/image_rect_color@sensor_msgs/msg/Image[ignition.msgs.Image',
-        '/head_l_stereo_camera/camera_info@sensor_msgs/msg/CameraInfo[ignition.msgs.CameraInfo',
-        '/head_r_stereo_camera/image_rect_color@sensor_msgs/msg/Image[ignition.msgs.Image',
-        '/head_r_stereo_camera/camera_info@sensor_msgs/msg/CameraInfo[ignition.msgs.CameraInfo',
-        '/head_rgbd_sensor/rgb/image_rect_color@sensor_msgs/msg/Image[ignition.msgs.Image',
-        '/head_rgbd_sensor/rgb/camera_info@sensor_msgs/msg/CameraInfo[ignition.msgs.CameraInfo',
-        '/head_rgbd_sensor/depth_registered/image@sensor_msgs/msg/Image[ignition.msgs.Image',
-        '/head_rgbd_sensor/depth_registered/camera_info@sensor_msgs/msg/CameraInfo[ignition.msgs.CameraInfo'
     ]
 
     remapping_list = [
         (f'/{robot_name_value}/cmd_vel', '/omni_base_controller/cmd_vel'),
-        ('/base_range_sensor/scan', '/scan'),
         ('/base_imu/data', '/imu/data'),
-        ('/head_center_camera/image_rect_color', '/head_center_camera/image_raw'),
-        ('/hand_camera/image_rect_color', '/hand_camera/image_raw'),
         (f'/model/{robot_name_value}/odometry', '/odom_ground_truth')
     ]
+
+    # Rendering sensors: gz only renders these while something subscribes
+    # (they are <always_on>0</always_on>), so bridging them is what makes
+    # them cost real simulation time -- the lidar plus six 640x480 camera
+    # streams add up to roughly 30 Mpix/s, which is why a single HSRB drags
+    # RTF down. bridge_sensors:=False hands ownership to the host
+    # application, which can then bridge each group only on demand.
+    if _bridge_sensors_enabled(context, args):
+        argument_list += [
+            '/base_range_sensor/scan@sensor_msgs/msg/LaserScan[ignition.msgs.LaserScan',
+            '/hand_camera/image_rect_color@sensor_msgs/msg/Image[ignition.msgs.Image',
+            '/hand_camera/camera_info@sensor_msgs/msg/CameraInfo[ignition.msgs.CameraInfo',
+            '/head_center_camera/image_rect_color@sensor_msgs/msg/Image[ignition.msgs.Image',
+            '/head_center_camera/camera_info@sensor_msgs/msg/CameraInfo[ignition.msgs.CameraInfo',
+            '/head_l_stereo_camera/image_rect_color@sensor_msgs/msg/Image[ignition.msgs.Image',
+            '/head_l_stereo_camera/camera_info@sensor_msgs/msg/CameraInfo[ignition.msgs.CameraInfo',
+            '/head_r_stereo_camera/image_rect_color@sensor_msgs/msg/Image[ignition.msgs.Image',
+            '/head_r_stereo_camera/camera_info@sensor_msgs/msg/CameraInfo[ignition.msgs.CameraInfo',
+            '/head_rgbd_sensor/rgb/image_rect_color@sensor_msgs/msg/Image[ignition.msgs.Image',
+            '/head_rgbd_sensor/rgb/camera_info@sensor_msgs/msg/CameraInfo[ignition.msgs.CameraInfo',
+            '/head_rgbd_sensor/depth_registered/image@sensor_msgs/msg/Image[ignition.msgs.Image',
+            '/head_rgbd_sensor/depth_registered/camera_info@sensor_msgs/msg/CameraInfo[ignition.msgs.CameraInfo'
+        ]
+        remapping_list += [
+            ('/base_range_sensor/scan', '/scan'),
+            ('/head_center_camera/image_rect_color', '/head_center_camera/image_raw'),
+            ('/hand_camera/image_rect_color', '/hand_camera/image_raw'),
+        ]
 
     return [Node(package='ros_gz_bridge',
                  executable='parameter_bridge',
